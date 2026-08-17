@@ -1,3 +1,9 @@
+# v0.91.6 (2026-08-17)
+
+- **Kiro region routing** — Hardened commercial-region validation across executor, model catalog, OAuth, refresh, external IdP, and provider-test paths; rejected unsupported AWS partitions and duplicate regional fallbacks.
+- **Kiro request recovery** — Kept retry instructions out of the rejected top-level `systemPrompt` field and expanded regression coverage.
+- **Provider dashboard** — Reverted commit `3399f6d97c6ca3232baeb84eeeb1f7d975bb5225` per release decision.
+
 # v0.91.5 (2026-08-16)
 
 - **Release tag validation** — Validate the original annotated tag through a temporary ref after GitHub Actions checkout.
