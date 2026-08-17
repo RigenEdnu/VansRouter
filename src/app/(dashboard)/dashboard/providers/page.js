@@ -20,6 +20,7 @@ import {
   ANTHROPIC_COMPATIBLE_PREFIX,
 } from "@/shared/constants/providers";
 import Link from "next/link";
+import { getErrorCode, getRelativeTime } from "@/shared/utils";
 import { useNotificationStore } from "@/store/notificationStore";
 import { useHeaderSearchStore } from "@/store/headerSearchStore";
 import { fetchCached } from "@/shared/utils/fetchCache";
@@ -27,10 +28,8 @@ import ModelAvailabilityBadge from "./components/ModelAvailabilityBadge";
 import AddCompatibleModal from "./components/AddCompatibleModal";
 import { useCircuitBreakers } from "@/shared/hooks/useCircuitBreakers";
 import CircuitBreakerBadge from "./components/CircuitBreakerBadge";
-import { classifyConnectionStatus } from "@/shared/utils/connectionStatus";
 
-function getStatusDisplay(stats) {
-  const { connected, unavailable } = stats;
+function getStatusDisplay(connected, error, errorCode) {
   const parts = [];
   if (connected > 0) {
     parts.push(
@@ -39,10 +38,13 @@ function getStatusDisplay(stats) {
       </Badge>,
     );
   }
-  if (unavailable > 0) {
+  if (error > 0) {
+    const errText = errorCode
+      ? `${error} Error (${errorCode})`
+      : `${error} Error`;
     parts.push(
-      <Badge key="unavailable" variant="warning" size="sm" dot>
-        {unavailable} Unavailable
+      <Badge key="error" variant="error" size="sm" dot>
+        {errText}
       </Badge>,
     );
   }
@@ -50,6 +52,48 @@ function getStatusDisplay(stats) {
     return <span className="text-text-muted">No connections</span>;
   }
   return parts;
+}
+
+function getConnectionErrorTag(connection) {
+  if (!connection) return null;
+
+  const explicitType = connection.lastErrorType;
+  if (explicitType === "runtime_error") return "RUNTIME";
+  if (
+    explicitType === "upstream_auth_error" ||
+    explicitType === "auth_missing" ||
+    explicitType === "token_refresh_failed" ||
+    explicitType === "token_expired"
+  )
+    return "AUTH";
+  if (explicitType === "upstream_rate_limited") return "429";
+  if (explicitType === "upstream_unavailable") return "5XX";
+  if (explicitType === "network_error") return "NET";
+
+  const numericCode = Number(connection.errorCode);
+  if (Number.isFinite(numericCode) && numericCode >= 400)
+    return String(numericCode);
+
+  const fromMessage = getErrorCode(connection.lastError);
+  if (fromMessage === "401" || fromMessage === "403") return "AUTH";
+  if (fromMessage && fromMessage !== "ERR") return fromMessage;
+
+  const msg = (connection.lastError || "").toLowerCase();
+  if (
+    msg.includes("runtime") ||
+    msg.includes("not runnable") ||
+    msg.includes("not installed")
+  )
+    return "RUNTIME";
+  if (
+    msg.includes("invalid api key") ||
+    msg.includes("token invalid") ||
+    msg.includes("revoked") ||
+    msg.includes("unauthorized")
+  )
+    return "AUTH";
+
+  return "ERR";
 }
 
 const APIKEY_INITIAL_VISIBLE = 20;
@@ -133,15 +177,42 @@ export default function ProvidersPage() {
       (c) => c.provider === providerId && authTypes.includes(c.authType),
     );
 
-    const connected = providerConnections.filter(
-      (connection) => classifyConnectionStatus(connection) === "active",
-    ).length;
-    const unavailable = providerConnections.length - connected;
+    const getEffectiveStatus = (conn) => {
+      const isCooldown = Object.entries(conn).some(
+        ([k, v]) =>
+          k.startsWith("modelLock_") && v && new Date(v).getTime() > Date.now(),
+      );
+      return conn.testStatus === "unavailable" && !isCooldown
+        ? "active"
+        : conn.testStatus;
+    };
+
+    const connected = providerConnections.filter((c) => {
+      const status = getEffectiveStatus(c);
+      return status === "active" || status === "success";
+    }).length;
+
+    const errorConns = providerConnections.filter((c) => {
+      const status = getEffectiveStatus(c);
+      return (
+        status === "error" || status === "expired" || status === "unavailable"
+      );
+    });
+
+    const error = errorConns.length;
     const total = providerConnections.length;
     const allDisabled =
       total > 0 && providerConnections.every((c) => c.isActive === false);
 
-    return { connected, unavailable, total, allDisabled };
+    const latestError = errorConns.sort(
+      (a, b) => new Date(b.lastErrorAt || 0) - new Date(a.lastErrorAt || 0),
+    )[0];
+    const errorCode = latestError ? getConnectionErrorTag(latestError) : null;
+    const errorTime = latestError?.lastErrorAt
+      ? getRelativeTime(latestError.lastErrorAt)
+      : null;
+
+    return { connected, error, total, errorCode, errorTime, allDisabled };
   };
 
   // Toggle all connections for a provider on/off. authType may be a single
@@ -590,7 +661,7 @@ export default function ProvidersPage() {
 }
 
 function ProviderCard({ providerId, provider, stats, authType, onToggle, circuitBreaker, onResetCircuit }) {
-  const { allDisabled } = stats;
+  const { connected, error, errorCode, errorTime, allDisabled } = stats;
   const isNoAuth = !!provider.noAuth;
 
   const dotColors = {
@@ -647,9 +718,12 @@ function ProviderCard({ providerId, provider, stats, authType, onToggle, circuit
                   <Badge variant="success" size="sm" dot>Ready</Badge>
                 ) : (
                   <>
-                    {getStatusDisplay(stats)}
+                    {getStatusDisplay(connected, error, errorCode)}
                     {circuitBreaker && (
                       <CircuitBreakerBadge status={circuitBreaker} onReset={() => onResetCircuit(providerId)} />
+                    )}
+                    {errorTime && (
+                      <span className="text-text-muted">{errorTime}</span>
                     )}
                   </>
                 )}
@@ -692,7 +766,7 @@ function ApiKeyProviderCard({
   circuitBreaker,
   onResetCircuit,
 }) {
-  const { allDisabled } = stats;
+  const { connected, error, errorCode, errorTime, allDisabled } = stats;
   const isCompatible = providerId.startsWith(OPENAI_COMPATIBLE_PREFIX);
   const isAnthropicCompatible = providerId.startsWith(
     ANTHROPIC_COMPATIBLE_PREFIX,
@@ -759,7 +833,7 @@ function ApiKeyProviderCard({
                   </Badge>
                 ) : (
                   <>
-                    {getStatusDisplay(stats)}
+                    {getStatusDisplay(connected, error, errorCode)}
                     {isCompatible && (
                       <Badge variant="default" size="sm">
                         {provider.apiType === "responses"
@@ -771,6 +845,9 @@ function ApiKeyProviderCard({
                       <Badge variant="default" size="sm">
                         Messages
                       </Badge>
+                    )}
+                    {errorTime && (
+                      <span className="text-text-muted">{errorTime}</span>
                     )}
                   </>
                 )}
@@ -887,3 +964,5 @@ function ProviderTestResultsView({ results }) {
     </div>
   );
 }
+
+
