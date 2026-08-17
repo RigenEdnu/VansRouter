@@ -186,7 +186,14 @@ export class KiroExecutor extends BaseExecutor {
   }
 
   /**
-   * Auth-aware endpoint ordering.
+   * Region- and auth-aware endpoint ordering.
+   *
+   * Region first: the registry baseUrls are hardcoded us-east-1. An IAM Identity
+   * Center account homed elsewhere (e.g. eu-central-1) only resolves through the
+   * regional Amazon Q host, so it gets that single endpoint. Rewriting the host
+   * per-region is not an option — `codewhisperer.<region>.amazonaws.com` does not
+   * exist outside us-east-1. us-east-1 (and an unset region) keeps the registry
+   * list untouched, so existing accounts are unaffected.
    *
    * API-key Kiro connections store a raw CodeWhisperer credential (validated
    * against codewhisperer.us-east-1.amazonaws.com via ListAvailableProfiles).
@@ -197,28 +204,22 @@ export class KiroExecutor extends BaseExecutor {
    * CodeWhisperer hosts FIRST, mirroring the Kiro-Go reference fork which never
    * routes api-key traffic through kiro.dev. External IdP enterprise tokens also
    * use the CodeWhisperer surface, with the `TokenType: EXTERNAL_IDP` header.
+   * IAM Identity Center (idc) tokens are AWS SSO access tokens from the same
+   * family; the kiro.dev gateway rejects them with 403 "bearer token invalid".
    * Other OAuth methods keep the default order (kiro.dev first) since their
    * tokens are what that gateway accepts.
    */
   getOrderedBaseUrls(credentials) {
+    const region = (credentials?.providerSpecificData?.region || "us-east-1").trim();
+    if (region && region !== "us-east-1") {
+      return [`https://q.${region}.amazonaws.com/generateAssistantResponse`];
+    }
     const baseUrls = this.getBaseUrls();
     const authMethod = credentials?.providerSpecificData?.authMethod;
-    // IAM Identity Center (idc) tokens are AWS SSO access tokens — the same
-    // family as external_idp/api_key. The kiro.dev gateway rejects them with
-    // 403 "bearer token invalid", so they must hit the CodeWhisperer
-    // *.amazonaws.com surface, and in the region the token was minted in
-    // (the baseUrls are hardcoded us-east-1).
     const isCodeWhispererSurface =
       authMethod === "api_key" || authMethod === "external_idp" || authMethod === "idc";
     if (!isCodeWhispererSurface) return baseUrls;
-
-    const region = (credentials?.providerSpecificData?.region || "us-east-1").trim();
-    const regionalize = (u) =>
-      region && region !== "us-east-1" && u.includes("amazonaws.com")
-        ? u.replace(/([a-z]+)\.[a-z0-9-]+\.amazonaws\.com/, `$1.${region}.amazonaws.com`)
-        : u;
-
-    const amazon = baseUrls.filter((u) => u.includes("amazonaws.com")).map(regionalize);
+    const amazon = baseUrls.filter((u) => u.includes("amazonaws.com"));
     const others = baseUrls.filter((u) => !u.includes("amazonaws.com"));
     return amazon.length > 0 ? [...amazon, ...others] : baseUrls;
   }
