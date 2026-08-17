@@ -161,4 +161,22 @@ describe("KiroExecutor.getOrderedBaseUrls — non-us-east-1 uses the regional Am
       "https://q.eu-central-1.amazonaws.com/generateAssistantResponse",
     ]);
   });
+
+  it("rejects unsafe regions before URL construction", () => {
+    expect(() => executor.getOrderedBaseUrls({
+      providerSpecificData: { region: "evil.com/x" },
+    })).toThrow("Invalid region");
+  });
+
+  it.each(["us-gov-west-1", "cn-north-1"])("rejects unsupported AWS partition %s", (region) => {
+    expect(() => executor.getOrderedBaseUrls({
+      providerSpecificData: { region },
+    })).toThrow(`Unsupported Kiro region: ${region}`);
+  });
+
+  it("does not duplicate a single regional endpoint as fallback", () => {
+    expect(executor.getFallbackCount({
+      providerSpecificData: { region: "eu-central-1" },
+    })).toBe(1);
+  });
 });

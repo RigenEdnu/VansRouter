@@ -5,6 +5,7 @@ import { refreshKiroToken } from "../services/tokenRefresh.js";
 import { SSE_HEADERS } from "../utils/sseConstants.js";
 import { STREAM_FIRST_CHUNK_TIMEOUT_MS } from "../config/runtimeConfig.js";
 import { transformEventStreamToSSE } from "./kiroEventStream.js";
+import { assertValidKiroRegion } from "../config/awsRegion.js";
 
 const KIRO_REPAIR_BUFFER_MAX_BYTES = 8 * 1024 * 1024;
 const KIRO_REPAIR_HEARTBEAT_MS = 10_000;
@@ -98,9 +99,16 @@ async function readResponsePrefix(response, signal, maxBytes, timeoutMs) {
 function appendRepairInstruction(body, kind) {
   const repaired = structuredClone(body || {});
   const instruction = REPAIR_INSTRUCTIONS[kind] || "Retry the previous incomplete Kiro response.";
-  repaired.systemPrompt = repaired.systemPrompt
-    ? `${repaired.systemPrompt}\n\n${instruction}`
-    : instruction;
+  delete repaired.systemPrompt;
+  const message = repaired.conversationState?.currentMessage?.userInputMessage || {};
+  message.content = [message.content, instruction].filter(Boolean).join("\n\n");
+  repaired.conversationState = {
+    ...(repaired.conversationState || {}),
+    currentMessage: {
+      ...(repaired.conversationState?.currentMessage || {}),
+      userInputMessage: message,
+    },
+  };
   return repaired;
 }
 
@@ -210,7 +218,8 @@ export class KiroExecutor extends BaseExecutor {
    * tokens are what that gateway accepts.
    */
   getOrderedBaseUrls(credentials) {
-    const region = (credentials?.providerSpecificData?.region || "us-east-1").trim();
+    const region = (credentials?.providerSpecificData?.region || "us-east-1").trim() || "us-east-1";
+    assertValidKiroRegion(region);
     if (region && region !== "us-east-1") {
       return [`https://q.${region}.amazonaws.com/generateAssistantResponse`];
     }
@@ -222,6 +231,10 @@ export class KiroExecutor extends BaseExecutor {
     const amazon = baseUrls.filter((u) => u.includes("amazonaws.com"));
     const others = baseUrls.filter((u) => !u.includes("amazonaws.com"));
     return amazon.length > 0 ? [...amazon, ...others] : baseUrls;
+  }
+
+  getFallbackCount(credentials = null) {
+    return this.getOrderedBaseUrls(credentials).length || 1;
   }
 
   buildUrl(model, stream, urlIndex = 0, credentials = null) {

@@ -21,6 +21,7 @@
 
 import { randomUUID, createHash } from "node:crypto";
 import { refreshKiroToken } from "./tokenRefresh.js";
+import { assertValidKiroRegion } from "../config/awsRegion.js";
 
 const KIRO_RUNTIME_SDK_VERSION = "1.0.0";
 const KIRO_AGENT_OS = "windows";
@@ -54,7 +55,10 @@ function stripSyntheticSuffixes(id) {
 function regionFromProfileArn(profileArn) {
   if (!profileArn || typeof profileArn !== "string") return DEFAULT_REGION;
   const parts = profileArn.split(":");
-  if (parts.length >= 4 && parts[3]) return parts[3];
+  if (parts.length >= 4 && parts[3]) {
+    assertValidKiroRegion(parts[3]);
+    return parts[3];
+  }
   return DEFAULT_REGION;
 }
 
@@ -158,6 +162,7 @@ function formatDisplayName(modelName, modelId, rateMultiplier) {
 async function fetchKiroCatalogRaw(credentials, signal) {
   const profileArn = credentials?.providerSpecificData?.profileArn || "";
   const region = regionFromProfileArn(profileArn);
+  assertValidKiroRegion(region);
   const params = new URLSearchParams();
   params.set("origin", "AI_EDITOR");
   if (profileArn) params.set("profileArn", profileArn);

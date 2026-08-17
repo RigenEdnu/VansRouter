@@ -3,6 +3,7 @@ import { OAUTH_ENDPOINTS, GITHUB_COPILOT, buildKimiHeaders } from "../../config/
 import { proxyAwareFetch } from "../../utils/proxyFetch.js";
 import { dedupRefresh } from "./dedup.js";
 import { buildExternalIdpRefreshParams } from "../../../src/lib/oauth/kiroExternalIdp.js";
+import { assertValidKiroRegion } from "../../config/awsRegion.js";
 
 let _xaiServiceSingleton = null;
 export async function refreshXaiToken(refreshToken, log) {
@@ -401,6 +402,7 @@ export async function refreshKiroToken(refreshToken, providerSpecificData, log, 
 
   if (clientId && clientSecret) {
     const isIDC = authMethod === "idc";
+    if (isIDC && region) assertValidKiroRegion(region);
     const endpoint = isIDC && region
       ? `https://oidc.${region}.amazonaws.com/token`
       : "https://oidc.us-east-1.amazonaws.com/token";

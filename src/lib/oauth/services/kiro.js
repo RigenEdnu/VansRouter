@@ -1,4 +1,5 @@
-import { KIRO_CONFIG, assertValidAwsRegion } from "../constants/oauth.js";
+import { KIRO_CONFIG } from "../constants/oauth.js";
+import { assertValidKiroRegion } from "open-sse/config/awsRegion.js";
 
 /**
  * Kiro OAuth Service
@@ -17,7 +18,7 @@ export class KiroService {
    * Returns clientId and clientSecret for device code flow
    */
   async registerClient(region = "us-east-1") {
-    assertValidAwsRegion(region);
+    assertValidKiroRegion(region);
     const endpoint = `https://oidc.${region}.amazonaws.com/client/register`;
 
     const response = await fetch(endpoint, {
@@ -51,7 +52,7 @@ export class KiroService {
    * Start device authorization for AWS Builder ID or IDC
    */
   async startDeviceAuthorization(clientId, clientSecret, startUrl, region = "us-east-1") {
-    assertValidAwsRegion(region);
+    assertValidKiroRegion(region);
     const endpoint = `https://oidc.${region}.amazonaws.com/device_authorization`;
 
     const response = await fetch(endpoint, {
@@ -86,7 +87,7 @@ export class KiroService {
    * Poll for token using device code (AWS Builder ID/IDC)
    */
   async pollDeviceToken(clientId, clientSecret, deviceCode, region = "us-east-1") {
-    assertValidAwsRegion(region);
+    assertValidKiroRegion(region);
     const endpoint = `https://oidc.${region}.amazonaws.com/token`;
 
     const response = await fetch(endpoint, {
@@ -180,7 +181,7 @@ export class KiroService {
     // AWS SSO OIDC refresh (Builder ID or IDC)
     if (clientId && clientSecret) {
       const safeRegion = region || "us-east-1";
-      assertValidAwsRegion(safeRegion);
+      assertValidKiroRegion(safeRegion);
       const endpoint = `https://oidc.${safeRegion}.amazonaws.com/token`;
 
       const response = await fetch(endpoint, {
@@ -267,7 +268,7 @@ export class KiroService {
    * JSON-1.0 surface returns `arn`).
    */
   async listAvailableProfiles(accessToken, region = "us-east-1") {
-    assertValidAwsRegion(region);
+    assertValidKiroRegion(region);
     const endpoint = `https://codewhisperer.${region}.amazonaws.com`;
 
     const response = await fetch(endpoint, {

@@ -1,3 +1,5 @@
+import { assertValidKiroRegion } from "open-sse/config/awsRegion.js";
+
 const MICROSOFT_TOKEN_ENDPOINT_HOSTS = new Set([
   "login.microsoftonline.com",
   "login.microsoft.com",
@@ -99,6 +101,7 @@ export function normalizeKiroExternalIdpAuth(rawAuth) {
   const tokenEndpoint = validateMicrosoftTokenEndpoint(input.token_endpoint || input.tokenEndpoint);
   const profileArn = normalizeString(input.profile_arn || input.profileArn);
   const region = normalizeString(input.region) || DEFAULT_REGION;
+  assertValidKiroRegion(region);
   const scope = normalizeScope(input.scopes || input.scope);
 
   if (!accessToken) throw new Error("access_token is required");
@@ -135,6 +138,7 @@ export function buildExternalIdpRefreshParams(refreshToken, providerSpecificData
   if (!refreshToken) throw new Error("refresh token is required");
   if (!clientId) throw new Error("clientId is required for external_idp refresh");
   if (!scope) throw new Error("scope is required for external_idp refresh");
+  if (providerSpecificData.region) assertValidKiroRegion(providerSpecificData.region);
 
   return {
     tokenEndpoint,

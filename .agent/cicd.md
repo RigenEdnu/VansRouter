@@ -12,6 +12,12 @@ Mandatory for every AI-assisted release. Do not bypass these rules with force ta
 - Never retag or move an existing release tag. Use the next version.
 - Never tag an older commit: CI requires the tag commit to equal `origin/main`.
 - Never publish npm manually outside the release workflow.
+- GitHub Actions checkout may dereference an annotated tag to its commit. CI must fetch the original tag object into a temporary ref before validating annotation:
+
+```bash
+git fetch origin "refs/tags/$GITHUB_REF_NAME:refs/tags/release-validation"
+RELEASE_TAG_REF=refs/tags/release-validation node cli/scripts/validate-release.cjs "$GITHUB_REF_NAME"
+```
 
 ## Required Commit Order
 
@@ -27,28 +33,28 @@ git tag -a vX.Y.Z -m "Release vX.Y.Z"
 git push origin vX.Y.Z
 ```
 
-### Example: Release `v0.91.5`
+### Example: Release `v0.91.6`
 
 Use the exact release version everywhere. Do not combine the changelog commit with code, workflow, or package-version changes.
 
 ```bash
 # Commit 1: code, CI, tests, and package version bump
 git add package.json cli/package.json .github/workflows/release.yml cli/scripts AGENTS.md .agent/cicd.md
-git commit -m "chore: prepare release 0.91.5"
+git commit -m "chore: prepare release 0.91.6"
 
 # Commit 2: changelog only; must remain the final commit before the tag
 git add CHANGELOG.md
 git diff --cached --name-only
 # Expected output: CHANGELOG.md
-git commit -m "docs(changelog): release v0.91.5"
+git commit -m "docs(changelog): release v0.91.6"
 
 git push origin main
-node cli/scripts/validate-release.cjs v0.91.5 --pretag
-git tag -a v0.91.5 -m "Release v0.91.5"
-git push origin v0.91.5
+node cli/scripts/validate-release.cjs v0.91.6 --pretag
+git tag -a v0.91.6 -m "Release v0.91.6"
+git push origin v0.91.6
 ```
 
-Before using another version, replace every `0.91.5` occurrence above with the new `X.Y.Z`. Confirm both package files and the top changelog heading use the same version.
+Before using another version, replace every `0.91.6` occurrence above with the new `X.Y.Z`. Confirm both package files and the top changelog heading use the same version.
 
 ## Pre-Tag Validation
 
@@ -80,6 +86,7 @@ promote-ghcr
 Required evidence:
 
 - `check-branch`: tag points to `main`, versions match, changelog is final commit, tag is annotated.
+- `check-branch` must validate the original annotated tag object, not the dereferenced checkout ref.
 - `package-npm`: actual tarball contains `app/_nm/sql.js/dist/sql-wasm.wasm`; no `better_sqlite3.node`.
 - Artifact smoke test: extracted CLI starts with a temporary `DATA_DIR`, responds to `/api/settings`, creates `db/data.sqlite`, and migrates legacy `db.json` without network.
 - `build-and-verify-ghcr`: staging image contains `linux/amd64` and `linux/arm64`; native SQLite query succeeds.
@@ -105,6 +112,8 @@ curl -fsS http://127.0.0.1:3003/api/health
 ## Failure Recovery
 
 - `check-branch` or package failure: fix the branch and create a new version/tag.
+- Once a tag is pushed, it is immutable even if CI fails. Never delete, move, force-push, or rerun under the same tag after a release-gate bug; fix the workflow and use the next version.
+- `v0.91.3` and `v0.91.4` are historical failed tags. Do not reuse them; `v0.91.5` was the first recovery release with the temporary-tag validation fix. `v0.91.6` carries the subsequent Kiro hardening and the provider-dashboard revert.
 - GHCR staging failure: do not promote its staging tag.
 - npm publish timeout: query npm first; never retry blindly:
 

@@ -1,4 +1,5 @@
-import { KIRO_CONFIG, assertValidAwsRegion } from "../constants/oauth.js";
+import { KIRO_CONFIG } from "../constants/oauth.js";
+import { assertValidKiroRegion } from "open-sse/config/awsRegion.js";
 import { extractEmailFromAccessToken } from "../providerHelpers.js";
 
 const kiro = {
@@ -8,7 +9,7 @@ const kiro = {
   requestDeviceCode: async (config, codeChallenge, options = {}) => {
     const trimmedRegion = typeof options.region === "string" ? options.region.trim() : "";
     const region = trimmedRegion || "us-east-1";
-    assertValidAwsRegion(region);
+    assertValidKiroRegion(region);
     const trimmedStartUrl = typeof options.startUrl === "string" ? options.startUrl.trim() : "";
     const startUrl = trimmedStartUrl || config.startUrl;
     const authMethod = options.authMethod === "idc" ? "idc" : "builder-id";
@@ -77,7 +78,7 @@ const kiro = {
   },
   pollToken: async (config, deviceCode, codeVerifier, extraData) => {
     const region = extraData?._region || "us-east-1";
-    assertValidAwsRegion(region);
+    assertValidKiroRegion(region);
     const tokenUrl = `https://oidc.${region}.amazonaws.com/token`;
     const response = await fetch(tokenUrl, {
       method: "POST",

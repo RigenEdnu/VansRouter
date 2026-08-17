@@ -11,7 +11,7 @@ import { openaiToKiroRequest } from "../../open-sse/translator/request/openai-to
 
 const contentOf = (result) =>
   result.conversationState.currentMessage.userInputMessage.content;
-const systemPromptOf = (result) => result.systemPrompt || "";
+const systemPromptOf = (result) => contentOf(result);
 
 describe("openaiToKiroRequest", () => {
   describe("basic message conversion", () => {
@@ -557,8 +557,8 @@ describe("openaiToKiroRequest", () => {
         {}
       );
 
-      expect(first.systemPrompt).toBe(second.systemPrompt);
-      expect(first.systemPrompt).not.toContain("Current time");
+      expect(first).not.toHaveProperty("systemPrompt");
+      expect(second).not.toHaveProperty("systemPrompt");
       expect(first.conversationState.currentMessage.userInputMessage.content).toContain("Current time");
     });
 

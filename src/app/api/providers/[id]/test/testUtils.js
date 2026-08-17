@@ -21,6 +21,7 @@ import {
 import { buildClineHeaders } from "@/shared/utils/clineAuth";
 import { validateAgentRouterConnection } from "open-sse/executors/agentrouter.js";
 import { getKimchiUserAgent } from "open-sse/utils/kimchiUserAgent.js";
+import { assertValidKiroRegion } from "open-sse/config/awsRegion.js";
 
 // OAuth provider test endpoints
 const OAUTH_TEST_CONFIG = {
@@ -303,6 +304,7 @@ async function refreshOAuthToken(connection) {
       const clientSecret = psd.clientSecret || connection.clientSecret;
       const region = psd.region || connection.region;
       if (clientId && clientSecret) {
+        assertValidKiroRegion(region || "us-east-1");
         const endpoint = `https://oidc.${region || "us-east-1"}.amazonaws.com/token`;
         const response = await fetch(endpoint, {
           method: "POST",
