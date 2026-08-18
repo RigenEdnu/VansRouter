@@ -148,11 +148,12 @@ export function geminiToOpenAIResponse(chunk, state) {
       finishReason = OPENAI_FINISH.TOOL_CALLS;
     }
 
-    // If stream is closing without any text content, reasoning, or tool calls emitted,
-    // emit a synthetic empty text chunk so OpenAI SDK clients (e.g. AI SDK / Kilo)
-    // don't reject with APIEmptyResponseError ("The API returned an empty response").
-    if (!state.hasEmittedContent && state.geminiToolCallCount === 0 && !state._reasoningSurfaced) {
-      results.push(buildChunk(chunkMeta(state), { content: "" }, null));
+    // If stream is closing without any text content or tool calls emitted,
+    // (even if reasoning/thinking was emitted), emit a synthetic whitespace/text chunk.
+    // Modern AI SDKs (e.g. Vercel AI SDK in Kilo) reject responses with APIEmptyResponseError
+    // when a stream finishes with ONLY thinking tokens and zero text/tool content.
+    if (!state.hasEmittedContent && state.geminiToolCallCount === 0) {
+      results.push(buildChunk(chunkMeta(state), { content: "\n" }, null));
       state.hasEmittedContent = true;
     }
     
