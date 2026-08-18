@@ -96,6 +96,7 @@ export function claudeToOpenAIResponse(chunk, state) {
       if (chunk.index === state.serverToolBlockIndex) break;
       const delta = chunk.delta;
       if (delta?.type === "text_delta" && delta.text) {
+        state.hasEmittedContent = true;
         results.push(createChunk(state, { content: delta.text }));
       } else if (delta?.type === "thinking_delta" && delta.thinking) {
         results.push(createChunk(state, reasoningDelta(delta.thinking)));
@@ -158,6 +159,14 @@ export function claudeToOpenAIResponse(chunk, state) {
 
       if (chunk.delta?.stop_reason) {
         state.finishReason = convertStopReason(chunk.delta.stop_reason);
+
+        // If stream is closing without any text content or tool calls emitted,
+        // emit a synthetic whitespace/text chunk so AI SDK clients don't crash with APIEmptyResponseError.
+        if (!state.hasEmittedContent && (!state.toolCalls || state.toolCalls.size === 0)) {
+          results.push(createChunk(state, { content: "\n" }));
+          state.hasEmittedContent = true;
+        }
+
         const finalChunk = createChunk(state, {}, state.finishReason);
 
         if (state.usage) {
@@ -180,6 +189,14 @@ export function claudeToOpenAIResponse(chunk, state) {
     case "message_stop": {
       if (!state.finishReasonSent) {
         const finishReason = state.finishReason || (state.toolCalls?.size > 0 ? OPENAI_FINISH.TOOL_CALLS : OPENAI_FINISH.STOP);
+
+        // If stream is closing without any text content or tool calls emitted,
+        // emit a synthetic whitespace/text chunk so AI SDK clients don't crash with APIEmptyResponseError.
+        if (!state.hasEmittedContent && (!state.toolCalls || state.toolCalls.size === 0)) {
+          results.push(createChunk(state, { content: "\n" }));
+          state.hasEmittedContent = true;
+        }
+
         const usageObj = (state.usage && typeof state.usage === 'object') ? {
           usage: {
             prompt_tokens: state.usage.input_tokens || 0,
