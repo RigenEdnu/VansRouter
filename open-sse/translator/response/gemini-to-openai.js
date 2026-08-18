@@ -100,6 +100,7 @@ export function geminiToOpenAIResponse(chunk, state) {
       // Inline data (images)
       const inlineData = part.inlineData || part.inline_data;
       if (inlineData?.data) {
+        state.hasEmittedContent = true;
         const mimeType = inlineData.mimeType || inlineData.mime_type || DEFAULT_IMAGE_MIME;
         results.push(buildChunk(
           chunkMeta(state),
