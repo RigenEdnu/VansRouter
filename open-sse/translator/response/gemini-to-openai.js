@@ -70,6 +70,7 @@ export function geminiToOpenAIResponse(chunk, state) {
             isThought ? reasoningDelta(part.text) : { content: part.text },
             null
           ));
+          if (!isThought) state.hasEmittedContent = true;
         }
         
         if (hasFunctionCall) {
@@ -88,6 +89,7 @@ export function geminiToOpenAIResponse(chunk, state) {
           isThought ? reasoningDelta(part.text) : { content: part.text },
           null
         ));
+        if (!isThought) state.hasEmittedContent = true;
       }
 
       // Function call
@@ -144,6 +146,14 @@ export function geminiToOpenAIResponse(chunk, state) {
     let finishReason = toOpenAIFinish(candidate.finishReason, "gemini");
     if (finishReason === OPENAI_FINISH.STOP && state.geminiToolCallCount > 0) {
       finishReason = OPENAI_FINISH.TOOL_CALLS;
+    }
+
+    // If stream is closing without any text content, reasoning, or tool calls emitted,
+    // emit a synthetic empty text chunk so OpenAI SDK clients (e.g. AI SDK / Kilo)
+    // don't reject with APIEmptyResponseError ("The API returned an empty response").
+    if (!state.hasEmittedContent && state.geminiToolCallCount === 0 && !state._reasoningSurfaced) {
+      results.push(buildChunk(chunkMeta(state), { content: "" }, null));
+      state.hasEmittedContent = true;
     }
     
     const finalChunk = buildChunk(chunkMeta(state), {}, finishReason);
