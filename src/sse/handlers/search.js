@@ -223,6 +223,11 @@ async function handleSingleProviderSearch(body, providerInput, request, apiKey, 
 
     if (result.success) return result.response;
 
+    // Do NOT lock the account or trigger account fallback on 400/422 (client request validation errors)
+    if (result.status === 400 || result.status === 422) {
+      return result.response;
+    }
+
     const { shouldFallback } = await markAccountUnavailable(credentials.connectionId, result.status, result.error, providerId);
 
     if (shouldFallback) {

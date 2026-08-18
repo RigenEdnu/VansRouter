@@ -15,7 +15,6 @@ const EXA_PRESETS = [
       query: "Next.js 16 App Router server actions streaming",
       type: "fast",
       numResults: 5,
-      category: "publication",
       includeDomains: ["nextjs.org", "github.com"],
       contents: {
         text: { maxCharacters: 1000, verbosity: "compact" },
