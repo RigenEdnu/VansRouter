@@ -5,8 +5,39 @@ import Image from "next/image";
 import { createPortal } from "react-dom";
 import { GITHUB_CONFIG } from "@/shared/constants/config";
 
+const DEFAULT_DONATE_DATA = {
+  title: "Support VansRouter",
+  message: "Terima kasih telah mendukung pengembangan VansRouter agar infrastruktur dan fitur baru terus aktif!",
+  channels: [
+    {
+      id: "saweria",
+      label: "Saweria",
+      description: "Dukung via QRIS, GoPay, OVO, DANA, LinkAja, ShopeePay",
+      icon: "volunteer_activism",
+      color: "#FAAE2B",
+      url: "https://saweria.co/vanszs"
+    },
+    {
+      id: "trakteer",
+      label: "Trakteer",
+      description: "Dukung via QRIS / E-Wallet / Bank Transfer",
+      icon: "favorite",
+      color: "#C9283E",
+      url: "https://teer.id/bevan_satriaa"
+    },
+    {
+      id: "kofi",
+      label: "Ko-fi",
+      description: "Support via Card or PayPal",
+      icon: "local_cafe",
+      color: "#13C3FF",
+      url: "https://ko-fi.com/bevansatriaa"
+    }
+  ]
+};
+
 export default function DonateModal({ isOpen, onClose }) {
-  const [fetchState, setFetchState] = useState({ data: null, loading: false, error: "" });
+  const [fetchState, setFetchState] = useState({ data: DEFAULT_DONATE_DATA, loading: false, error: "" });
   const modalRef = useRef(null);
   const hasFetched = useRef(false);
 
@@ -19,7 +50,7 @@ export default function DonateModal({ isOpen, onClose }) {
     // set-state-in-effect rule while preserving the same observable behavior.
     Promise.resolve().then(() => {
       if (!GITHUB_CONFIG.donateUrl) {
-        setFetchState({ data: null, loading: false, error: "Donate is not configured." });
+        // Use default built-in donate channels if no external remote config URL is provided
         return;
       }
       setFetchState(prev => ({ ...prev, loading: true, error: "" }));
@@ -28,8 +59,8 @@ export default function DonateModal({ isOpen, onClose }) {
           if (!res.ok) throw new Error(`HTTP ${res.status}`);
           return res.json();
         })
-        .then((json) => setFetchState(prev => ({ ...prev, data: json, loading: false })))
-        .catch((err) => setFetchState(prev => ({ ...prev, error: err.message || "Failed to load", loading: false })));
+        .then((json) => setFetchState({ data: json, loading: false, error: "" }))
+        .catch((err) => setFetchState({ data: DEFAULT_DONATE_DATA, error: "", loading: false }));
     });
   }, [isOpen]);
 
