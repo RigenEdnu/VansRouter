@@ -21,13 +21,14 @@ export default {
     baseUrl: "https://api.exa.ai/search",
     method: "POST",
     authType: "apikey",
-    authHeader: "x-api-key",
+    authHeader: "bearer",
     costPerQuery: 0.007,
     freeMonthlyQuota: 1000,
     searchTypes: [
       "web",
       "news"
     ],
+    exaSearchTypes: ["instant", "fast", "auto", "deep-lite", "deep", "deep-reasoning"],
     defaultMaxResults: 5,
     maxMaxResults: 100,
     timeoutMs: 10000,

@@ -27,7 +27,7 @@ function makeResult(providerId, item, idx, now) {
       image_url: item.image_url || null,
     },
     citation: { provider: providerId, retrieved_at: now, rank: idx + 1 },
-    provider_raw: null,
+    provider_raw: item.provider_data || item.provider_raw || null,
   };
 }
 
@@ -72,7 +72,13 @@ function normalizePerplexity(data, _query, _searchType) {
 function normalizeExa(data, _query, _searchType) {
   const now = new Date().toISOString();
   const items = data.results;
-  if (!Array.isArray(items)) return { results: [], totalResults: null };
+  const metadata = {
+    requestId: data.requestId || null,
+    resolvedSearchType: data.resolvedSearchType || data.searchType || null,
+    costDollars: data.costDollars || null,
+    output: data.output || null,
+  };
+  if (!Array.isArray(items)) return { results: [], totalResults: null, metadata };
   const results = items.map((item, idx) =>
     makeResult("exa", {
       title: item.title,
@@ -85,9 +91,24 @@ function normalizeExa(data, _query, _searchType) {
       image_url: item.image,
       full_text: item.text,
       text_format: "text",
+      provider_data: {
+        id: item.id,
+        publishedDate: item.publishedDate || null,
+        author: item.author || null,
+        image: item.image || null,
+        favicon: item.favicon || null,
+        highlightScores: item.highlightScores || null,
+        summary: item.summary || null,
+        subpages: item.subpages || null,
+        extras: item.extras || null,
+      },
     }, idx, now)
   );
-  return { results, totalResults: results.length };
+  return {
+    results,
+    totalResults: results.length,
+    metadata,
+  };
 }
 
 function normalizeTavily(data, _query, _searchType) {

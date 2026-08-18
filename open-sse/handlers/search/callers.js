@@ -31,6 +31,7 @@
  */
 
 import { assertPublicUrl } from "../../../src/shared/utils/ssrfGuard.js";
+import { buildExaBody } from "./exa.js";
 
 // ── Helpers ─────────────────────────────────────────────────────────────
 
@@ -149,22 +150,12 @@ async function buildPerplexityRequest(config, params) {
 }
 
 async function buildExaRequest(config, params) {
-  const { includes, excludes } = parseDomainFilter(params.domainFilter);
-  const body = {
-    query: params.query,
-    numResults: params.maxResults,
-    type: "auto",
-    text: true,
-    highlights: true,
-  };
-  if (includes.length) body.includeDomains = includes;
-  if (excludes.length) body.excludeDomains = excludes;
-  if (params.searchType === "news") body.category = "news";
+  const body = buildExaBody(params);
   return {
     url: await resolveBaseUrl(config, params),
     init: {
       method: "POST",
-      headers: { "Content-Type": "application/json", "x-api-key": params.token },
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${params.token}` },
       body: JSON.stringify(body),
     },
   };

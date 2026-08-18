@@ -1,6 +1,7 @@
 import { PROVIDER_MODELS } from "open-sse/config/providerModels.js";
 import { AI_PROVIDERS, ALIAS_TO_ID } from "@/shared/constants/providers";
 import { getModelKind } from "@/shared/constants/models";
+import { EXA_SEARCH_PARAMETER_SCHEMA } from "open-sse/handlers/search/exa.js";
 
 const KIND_ENDPOINT = {
   llm: "/v1/chat/completions",
@@ -33,7 +34,8 @@ function buildInfo({ alias, providerId, model, kind, providerInfo }) {
   }
   if (kind === "webSearch" && providerInfo?.searchConfig) {
     const cfg = providerInfo.searchConfig;
-    if (cfg.searchTypes) out.searchTypes = cfg.searchTypes;
+     if (cfg.searchTypes) out.searchTypes = cfg.searchTypes;
+     if (cfg.exaSearchTypes) out.exaSearchTypes = cfg.exaSearchTypes;
     if (cfg.maxMaxResults) out.maxResults = cfg.maxMaxResults;
     if (cfg.requiredOptions) out.required = cfg.requiredOptions;
   }
@@ -64,7 +66,14 @@ function lookup(fullId, requestedKind) {
   if (modelId === "search" && providerInfo?.searchConfig) {
     return buildInfo({
       alias, providerId, kind: "webSearch", providerInfo,
-      model: { id: "search", name: `${providerInfo.name} Search`, params: ["query", "max_results", "country", "language", "time_range", "domain_filter", "search_type"] },
+       model: {
+         id: "search",
+         name: `${providerInfo.name} Search`,
+         params: providerId === "exa"
+           ? ["query", "max_results", "search_type", "exa_options", "exa_options.contents"]
+           : ["query", "max_results", "country", "language", "time_range", "domain_filter", "search_type"],
+         ...(providerId === "exa" ? { parameterSchema: EXA_SEARCH_PARAMETER_SCHEMA } : {}),
+       },
     });
   }
   if (modelId === "fetch" && providerInfo?.fetchConfig) {

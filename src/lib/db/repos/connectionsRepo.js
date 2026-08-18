@@ -188,6 +188,46 @@ export async function createProviderConnection(data) {
   return result;
 }
 
+export async function createProviderConnectionsBulk(items) {
+  if (!Array.isArray(items) || items.length === 0 || items.length > 500) {
+    throw new Error("Bulk connection batch must contain 1-500 items");
+  }
+  const db = await getAdapter();
+  const results = [];
+  db.transaction(() => {
+    for (const data of items) {
+      if (!data?.provider || !data?.apiKey || !data?.name) {
+        results.push({ name: data?.name || null, ok: false, error: "provider, apiKey, and name are required" });
+        continue;
+      }
+      const existing = db.all(`SELECT * FROM providerConnections WHERE provider = ?`, [data.provider])
+        .map(rowToConn)
+        .find((connection) => connection.authType === "apikey" && connection.name === data.name);
+      const now = new Date().toISOString();
+      const connection = existing
+        ? {
+            ...existing,
+            ...data,
+            providerSpecificData: data.providerSpecificData === undefined
+              ? existing.providerSpecificData
+              : data.providerSpecificData,
+            authType: "apikey",
+            updatedAt: now,
+          }
+        : {
+            id: randomUUID(), provider: data.provider, authType: "apikey", name: data.name,
+            priority: data.priority || 1, isActive: true, createdAt: now, updatedAt: now,
+            apiKey: data.apiKey, testStatus: data.testStatus || "unknown",
+            providerSpecificData: data.providerSpecificData,
+          };
+      upsert(db, connection);
+      results.push({ name: data.name, ok: true, id: connection.id, updated: !!existing });
+    }
+    for (const provider of new Set(items.map((item) => item.provider))) reorderInTx(db, provider);
+  });
+  return results;
+}
+
 // Critical: OAuth refresh token race — atomic merge inside transaction
 export async function updateProviderConnection(id, data) {
   const db = await getAdapter();

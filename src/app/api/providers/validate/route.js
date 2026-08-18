@@ -39,11 +39,13 @@ async function probeWebProvider(provider, apiKey) {
 
   // Minimal body for POST endpoints; GET sends nothing
   if (cfg.method === "POST") {
-    body = JSON.stringify({ query: "ping", q: "ping", url: "https://example.com" });
+    body = provider === "exa"
+      ? JSON.stringify({ query: "ping", type: "instant", numResults: 1, contents: { highlights: true } })
+      : JSON.stringify({ query: "ping", q: "ping", url: "https://example.com" });
   }
 
   const res = await fetch(url, { method: cfg.method, headers, body, signal: AbortSignal.timeout(8000) });
-  return res.status !== 401 && res.status !== 403;
+  return res.status !== 401 && res.status !== 403 && res.status !== 402 && res.status !== 429;
 }
 
 // Probe a media provider (tts/embedding/stt/image/video) using *Config.

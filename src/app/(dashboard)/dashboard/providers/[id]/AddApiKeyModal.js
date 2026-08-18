@@ -43,7 +43,9 @@ export default function AddApiKeyModal({ isOpen, provider, providerName, isCompa
   const [saving, setSaving] = useState(false);
   const bulkPlaceholder = isCloudflareAi
     ? `name1|sk-key1|acc123456\nname2|sk-key2|def789012\nsk-key-only-auto-named`
-    : BULK_PLACEHOLDER;
+    : provider === "exa"
+      ? `account-1|exa-key-1\naccount-2|exa-key-2\nexa-key-only-auto-named`
+      : BULK_PLACEHOLDER;
 
   const [mode, setMode] = useState("single"); // "single" | "bulk"
   const [bulkText, setBulkText] = useState("");
@@ -141,25 +143,17 @@ export default function AddApiKeyModal({ isOpen, provider, providerName, isCompa
     setBulkResult(null);
     let success = 0;
     let failed = 0;
-    for (const entry of plan) {
-      try {
-        const res = await fetch("/api/providers", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            provider,
-            apiKey: entry.apiKey,
-            name: entry.name,
-            priority: 1,
-            testStatus: "unknown",
-            ...(entry.providerSpecificData ? { providerSpecificData: entry.providerSpecificData } : {}),
-          }),
-        });
-        if (res.ok) success++;
-        else failed++;
-      } catch {
-        failed++;
-      }
+    try {
+      const res = await fetch("/api/providers/bulk", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ items: plan.map((entry) => ({ provider, apiKey: entry.apiKey, name: entry.name, priority: 1, providerSpecificData: entry.providerSpecificData })) }),
+      });
+      const data = await res.json();
+      success = Array.isArray(data.results) ? data.results.filter((item) => item.ok).length : 0;
+      failed = plan.length - success;
+    } catch {
+      failed = plan.length;
     }
     setSaving(false);
     setBulkResult({ success, failed });
@@ -182,7 +176,9 @@ export default function AddApiKeyModal({ isOpen, provider, providerName, isCompa
             <p className="text-xs text-text-muted">
               {isCloudflareAi
                 ? <>One key per line. Format: <code>name|apiKey|accountId</code> or just <code>apiKey</code> (auto-named by index).</>
-                : <>One key per line. Format: <code>name|apiKey</code> or just <code>apiKey</code> (auto-named by index).</>
+                : provider === "exa"
+                  ? <>One Exa account per line: <code>name|apiKey</code> or <code>apiKey</code>. Keys are stored without a billable probe; runtime rotates on auth, quota, and rate-limit errors.</>
+                  : <>One key per line. Format: <code>name|apiKey</code> or just <code>apiKey</code> (auto-named by index).</>
               }
             </p>
             <textarea

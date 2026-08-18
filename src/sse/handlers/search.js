@@ -157,7 +157,8 @@ async function handleSingleProviderSearch(body, providerInput, request, apiKey, 
     offset: body.offset,
     domain_filter: body.domain_filter,
     content_options: body.content_options,
-    provider_options: body.provider_options
+    provider_options: body.provider_options,
+    exa_options: body.exa_options || body.exa || body
   };
 
   // No-auth providers (e.g. searxng) bypass credential lookup

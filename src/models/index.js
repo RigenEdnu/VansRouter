@@ -3,6 +3,7 @@ export {
   getProviderConnections,
   getProviderConnectionById,
   createProviderConnection,
+  createProviderConnectionsBulk,
   updateProviderConnection,
   deleteProviderConnection,
   getProviderNodes,
