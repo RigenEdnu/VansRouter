@@ -73,7 +73,7 @@ function processTextNode(node) {
   
   const tagName = parent.tagName?.toLowerCase();
   
-  // Skip elements that don't allow text nodes
+  // Skip elements that don't allow text nodes or icon font ligature containers
   const skipTags = [
     "script", "style", "code", "pre",
     "colgroup", "table", "thead", "tbody", "tfoot", "tr",
@@ -81,6 +81,20 @@ function processTextNode(node) {
   ];
   
   if (skipTags.includes(tagName)) return;
+
+  // Never translate text nodes inside icon font containers (Material Symbols/Icons)
+  // because icon ligature strings (e.g. "search", "close", "edit", "menu") will be
+  // translated into foreign text (e.g. "بحث", "关闭", "Suchen"), breaking icon rendering.
+  const classList = parent.classList;
+  if (
+    classList &&
+    (classList.contains("material-symbols-outlined") ||
+      classList.contains("material-symbols") ||
+      classList.contains("material-icons") ||
+      classList.contains("material-icons-outlined"))
+  ) {
+    return;
+  }
   
   // Store original text if not already stored
   if (!node._originalText) {
