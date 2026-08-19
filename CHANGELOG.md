@@ -1,3 +1,9 @@
+# v0.91.9 (2026-08-19)
+
+- **Local font bundling** — Bundled Material Symbols locally to eliminate external Google Fonts CDN dependency and removed the fragile `visibility: hidden` font-loading gate.
+- **Sidebar changelog modal** — Replaced the external GitHub changelog link in the sidebar with an interactive modal popup matching the navbar experience.
+- **Multi-language changelog action** — Added translations for 'Check new changelog' across all 30 supported language literal files.
+
 # v0.91.8 (2026-08-18)
 
 - **Empty reasoning stream recovery** — Emitted a synthetic text delta before stream completion across Gemini and Claude translators when models finish with only thinking content, preventing `APIEmptyResponseError` in AI SDK clients.
