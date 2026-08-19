@@ -1,3 +1,9 @@
+# v0.91.10 (2026-08-19)
+
+- **OpenAI Responses system prompt injection** — Injected Token Saver prompts (Caveman/Ponytail) into `body.instructions` instead of `input[]` for OpenAI Responses / Codex models, preventing `Unknown parameter: 'input[0].content'` (#106 / #2497).
+- **Web fetch format routing** — Forwarded `format` parameter (`markdown`, `text`, `html`) to upstream web fetch providers (Jina Reader via `X-Respond-With`, Firecrawl via `formats`, Tavily via `format`).
+- **Chat content part type standardization** — Standardized array content parts in Chat completions to `{ type: "text" }` instead of `input_text` for strict upstream providers (#3204).
+
 # v0.91.9 (2026-08-19)
 
 - **Local font bundling** — Bundled Material Symbols locally to eliminate external Google Fonts CDN dependency and removed the fragile `visibility: hidden` font-loading gate.
