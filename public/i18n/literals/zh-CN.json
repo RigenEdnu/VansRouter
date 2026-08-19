@@ -1388,5 +1388,6 @@
   "✓ Confirm Add": "✓ 确认添加",
   "📝 Configure providers in dashboard or use environment variables": "📝 在仪表盘中配置提供商或使用环境变量",
   "🔐 OAuth required. Add now and authenticate after Apply; tool list will be discovered after first connect.": "🔐 需要 OAuth。立即添加并在应用后认证；工具列表将在首次连接后自动发现。",
-  "Donate Me": "支持开发"
+  "Donate Me": "支持开发",
+  "Check new changelog": "查看更新日志"
 }
