@@ -126,8 +126,8 @@ describe("Post-merge: layout.js VansAI branding preserved", () => {
     expect(src).toContain("VansAI");
   });
 
-  it("has upstream font loading script", () => {
-    expect(src).toContain("document.fonts");
+  it("bundles Material Symbols locally without fragile CDN scripts", () => {
+    expect(src).toContain("material-symbols/outlined.css");
   });
 
   it("does NOT have upstream 9Router title", () => {

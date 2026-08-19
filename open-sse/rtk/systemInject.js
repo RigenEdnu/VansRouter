@@ -23,25 +23,46 @@ export function injectSystemPrompt(body, format, prompt) {
     case FORMATS.KIRO:
       injectKiroSystem(body, prompt);
       return;
+    case FORMATS.OPENAI_RESPONSES:
+    case FORMATS.OPENAI_RESPONSE:
+    case FORMATS.CODEX:
+      injectResponsesSystem(body, prompt);
+      return;
     default:
-      // OpenAI and OpenAI-shaped formats (responses/codex/cursor/ollama)
+      // OpenAI and OpenAI-shaped formats (chat completions / ollama / cursor)
       injectMessagesSystem(body, prompt);
   }
 }
 
-// OpenAI-shaped: messages[] (chat) or input[] (responses) or instructions (responses string)
-// Kiro shape: top-level systemPrompt. Keep the provider's native field separate
-// from conversationState so injection survives translation without rewriting messages.
+// Kiro shape: top-level systemPrompt or conversationState.currentMessage.userInputMessage.content
 function injectKiroSystem(body, prompt) {
   if (typeof body.systemPrompt === "string" && body.systemPrompt.trim()) {
     body.systemPrompt = `${body.systemPrompt}${SEP}${prompt}`;
+    return;
+  }
+  const message = body.conversationState?.currentMessage?.userInputMessage;
+  if (message) {
+    message.content = [message.content, prompt].filter(Boolean).join(SEP);
   } else {
     body.systemPrompt = prompt;
   }
 }
 
+// OpenAI Responses API (e.g. Codex/GPT-5.6 / /v1/responses):
+// Top-level string `instructions` is the primary system/instruction mechanism.
+// If absent, we append or set top-level `instructions`. Unshifting untyped `{role, content}`
+// into `input[]` triggers: "Unknown parameter: 'input[0].content'".
+function injectResponsesSystem(body, prompt) {
+  if (typeof body.instructions === "string" && body.instructions.trim()) {
+    body.instructions = `${body.instructions}${SEP}${prompt}`;
+  } else {
+    body.instructions = prompt;
+  }
+}
+
+// OpenAI Chat Completions: messages[]
 function injectMessagesSystem(body, prompt) {
-  // OpenAI Responses API: top-level string field
+  // If request happens to have instructions (e.g. from direct caller), append to it
   if (typeof body.instructions === "string") {
     body.instructions = body.instructions
       ? `${body.instructions}${SEP}${prompt}`
@@ -66,8 +87,8 @@ function appendToOpenAIMessage(msg, prompt) {
   if (typeof msg.content === "string") {
     msg.content = `${msg.content}${SEP}${prompt}`;
   } else if (Array.isArray(msg.content)) {
-    // Responses-style array of parts {type:"input_text"|"text", text}
-    msg.content.push({ type: "input_text", text: prompt });
+    // Standard OpenAI chat content parts use {type: "text", text: "..."}
+    msg.content.push({ type: "text", text: prompt });
   } else {
     msg.content = prompt;
   }

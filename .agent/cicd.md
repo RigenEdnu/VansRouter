@@ -33,28 +33,28 @@ git tag -a vX.Y.Z -m "Release vX.Y.Z"
 git push origin vX.Y.Z
 ```
 
-### Example: Release `v0.91.9`
+### Example: Release `v0.91.10`
 
 Use the exact release version everywhere. Do not combine the changelog commit with code, workflow, or package-version changes.
 
 ```bash
 # Commit 1: code, CI, tests, and package version bump
 git add package.json cli/package.json .github/workflows/release.yml cli/scripts AGENTS.md .agent/cicd.md
-git commit -m "chore: prepare release 0.91.9"
+git commit -m "chore: prepare release 0.91.10"
 
 # Commit 2: changelog only; must remain the final commit before the tag
 git add CHANGELOG.md
 git diff --cached --name-only
 # Expected output: CHANGELOG.md
-git commit -m "docs(changelog): release v0.91.9"
+git commit -m "docs(changelog): release v0.91.10"
 
 git push origin main
-node cli/scripts/validate-release.cjs v0.91.9 --pretag
-git tag -a v0.91.9 -m "Release v0.91.9"
-git push origin v0.91.9
+node cli/scripts/validate-release.cjs v0.91.10 --pretag
+git tag -a v0.91.10 -m "Release v0.91.10"
+git push origin v0.91.10
 ```
 
-Before using another version, replace every `0.91.9` occurrence above with the new `X.Y.Z`. Confirm both package files and the top changelog heading use the same version.
+Before using another version, replace every `0.91.10` occurrence above with the new `X.Y.Z`. Confirm both package files and the top changelog heading use the same version.
 
 ## Pre-Tag Validation
 

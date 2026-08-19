@@ -124,13 +124,14 @@ export async function handleFetchCore({ url, format, maxCharacters, provider, pr
 
 async function runFirecrawl({ url, fmt, timeoutMs, apiKey, maxCharacters, costPerQuery, startedAt }) {
   const upstreamStart = Date.now();
+  const formatKey = fmt === "text" ? "markdown" : (fmt === "html" ? "html" : "markdown");
   const r = await tryFetch("https://api.firecrawl.dev/v1/scrape", {
     method: "POST",
     headers: {
       "content-type": "application/json",
       ...(apiKey ? { authorization: `Bearer ${apiKey}` } : {})
     },
-    body: JSON.stringify({ url, formats: [fmt] })
+    body: JSON.stringify({ url, formats: [formatKey] })
   }, timeoutMs);
 
   if (!r.ok) {
@@ -142,7 +143,7 @@ async function runFirecrawl({ url, fmt, timeoutMs, apiKey, maxCharacters, costPe
     return { success: false, status: r.res.status, error: json?.error || `Firecrawl error: ${r.res.status}` };
   }
   const d = json?.data || {};
-  const text = truncate(d.markdown || d.html || d.text || "", maxCharacters);
+  const text = truncate(d[formatKey] || d.markdown || d.html || d.text || "", maxCharacters);
   const title = d.metadata?.title || null;
   return {
     success: true,
@@ -156,9 +157,13 @@ async function runFirecrawl({ url, fmt, timeoutMs, apiKey, maxCharacters, costPe
 async function runJina({ url, fmt, timeoutMs, apiKey, maxCharacters, costPerQuery, startedAt }) {
   const target = `https://r.jina.ai/${encodeURIComponent(url)}`;
   const upstreamStart = Date.now();
+  const headers = {
+    ...(apiKey ? { authorization: `Bearer ${apiKey}` } : {}),
+    ...(fmt ? { "X-Respond-With": fmt } : {})
+  };
   const r = await tryFetch(target, {
     method: "GET",
-    headers: apiKey ? { authorization: `Bearer ${apiKey}` } : {}
+    headers
   }, timeoutMs);
 
   if (!r.ok) {
@@ -181,13 +186,14 @@ async function runJina({ url, fmt, timeoutMs, apiKey, maxCharacters, costPerQuer
 
 async function runTavily({ url, fmt, timeoutMs, apiKey, maxCharacters, costPerQuery, startedAt }) {
   const upstreamStart = Date.now();
+  const tavilyFormat = fmt === "text" ? "text" : "markdown";
   const r = await tryFetch("https://api.tavily.com/extract", {
     method: "POST",
     headers: {
       "content-type": "application/json",
       ...(apiKey ? { authorization: `Bearer ${apiKey}` } : {})
     },
-    body: JSON.stringify({ urls: [url], extract_depth: "basic" })
+    body: JSON.stringify({ urls: [url], extract_depth: "basic", format: tavilyFormat })
   }, timeoutMs);
 
   if (!r.ok) {
