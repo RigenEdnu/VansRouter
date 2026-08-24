@@ -2,6 +2,15 @@ import http from "http";
 import { URL } from "url";
 import { CODEX_CONFIG } from "../constants/oauth.js";
 
+// Loopback origin guard for local callback proxies.
+// Legit OAuth redirects are top-level navigations (no `Origin` header); a cross-site
+// page issuing `fetch(..., {mode:"no-cors"})` to scan + hit 127.0.0.1 always sends
+// `Origin: https://attacker`. Reject any non-loopback Origin to block login-CSRF.
+function isLoopbackOrigin(origin) {
+  if (!origin) return true; // navigation redirect — allow
+  return /^http:\/\/(127\.0\.0\.1|localhost)(:\d+)?$/.test(origin);
+}
+
 /**
  * Start a local HTTP server to receive OAuth callback
  * @param {Function} onCallback - Called with query params when callback received
@@ -197,6 +206,13 @@ export function startCodexProxy(appPort) {
         return;
       }
 
+      // Anti-CSRF: reject cross-origin fetches (legit redirects send no Origin)
+      if (!isLoopbackOrigin(req.headers.origin)) {
+        res.writeHead(403, { "Content-Type": "text/html; charset=utf-8" });
+        res.end(renderCodexResultPage(false, "Cross-origin callback rejected"));
+        return;
+      }
+
       const code = url.searchParams.get("code");
       const state = url.searchParams.get("state");
       const errorParam = url.searchParams.get("error");
@@ -337,6 +353,13 @@ export function startXaiProxy(appPort) {
       if (url.pathname !== "/callback" && url.pathname !== "/auth/callback") {
         res.writeHead(404);
         res.end("Not found");
+        return;
+      }
+
+      // Anti-CSRF: reject cross-origin fetches (legit redirects send no Origin)
+      if (!isLoopbackOrigin(req.headers.origin)) {
+        res.writeHead(403, { "Content-Type": "text/html; charset=utf-8" });
+        res.end(renderCodexResultPage(false, "Cross-origin callback rejected"));
         return;
       }
 

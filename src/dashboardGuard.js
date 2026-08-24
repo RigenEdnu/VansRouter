@@ -304,7 +304,7 @@ export async function proxy(request) {
       return NextResponse.redirect(new URL("/dashboard", request.url));
     }
 
-    const host = request.headers.get("host") || "api.bevansatria.my.id";
+    const host = request.headers.get("host") || "localhost:3000";
     const protocol = request.headers.get("x-forwarded-proto") || "https";
     const baseUrl = `${protocol}://${host}`;
 

@@ -248,14 +248,12 @@ export default function OAuthModal({ isOpen, provider, providerInfo, onSuccess, 
         redirectUri = "http://localhost:1455/auth/callback";
       } else if (provider === "xai") {
         redirectUri = "http://127.0.0.1:56121/callback";
-      } else if (provider === "antigravity" || provider === "gemini-cli") {
-        redirectUri = `http://localhost:${appPort}/callback`;
       } else if (provider === "zcode") {
         // Z.ai client (per ZCode source) only accepts custom URL scheme `zcode://zai-auth/callback`.
         // Browser shows ERR_UNKNOWN_URL_SCHEME; user copies URL from address bar → manual paste.
         redirectUri = "zcode://zai-auth/callback";
       } else {
-        redirectUri = `https://api.bevansatria.my.id/callback`;
+        redirectUri = `http://localhost:${appPort}/callback`;
       }
 
       // Build authorize URL first to get codeVerifier/state for codex server-side mode
@@ -467,10 +465,14 @@ export default function OAuthModal({ isOpen, provider, providerInfo, onSuccess, 
 
     // Method 1: postMessage from popup
     const handleMessage = (event) => {
-      // Allow messages from same origin or localhost (any port)
-      const isLocalhost = event.origin.includes("localhost") || event.origin.includes("127.0.0.1");
+      // Validate origin strictly: must be same origin or loopback/localhost
+      let isLoopback = false;
+      try {
+        const originUrl = new URL(event.origin);
+        isLoopback = originUrl.hostname === "localhost" || originUrl.hostname === "127.0.0.1";
+      } catch {}
       const isSameOrigin = event.origin === window.location.origin;
-      if (!isLocalhost && !isSameOrigin) return;
+      if (!isLoopback && !isSameOrigin) return;
       
       if (event.data?.type === "oauth_callback") {
         handleCallback(event.data.data);
