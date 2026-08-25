@@ -158,6 +158,7 @@ export async function GET(request, { params }) {
         "kimi-coding",
         "kilocode",
         "codebuddy-cn",
+        "codebuddy-intl",
         "qoder",
         "grok-cli",
       ];
