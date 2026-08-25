@@ -1,3 +1,7 @@
+# v0.91.12 (2026-08-25)
+
+- **Multi-arch release CI hardening** — Added `docker/setup-qemu-action@v3` prior to `docker/setup-buildx-action@v3` in the release workflow to resolve ARM64 binfmt registration and prevent QEMU instruction stalls during multi-platform container builds.
+
 # v0.91.11 (2026-08-25)
 
 - **Grok 4.6 full capability & effort scaling** — Added first-class support for `grok-4.6` with regex effort matching (`/^grok-4\.[56](?:$|-)/`), 500k context window registration in provider capabilities, and virtual reasoning effort aliases (`xhigh`, `high`, `medium`, `low`).
