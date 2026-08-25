@@ -47,18 +47,24 @@ export async function refreshAccessToken(provider, refreshToken, credentials, lo
 
   return dedupRefresh(provider, refreshToken, async () => {
   try {
+    // config values come from the registry; gitlab-style providers store the
+    // OAuth client per credential in providerSpecificData instead
+    const params = {
+      grant_type: "refresh_token",
+      refresh_token: refreshToken,
+    };
+    const clientId = config.clientId ?? credentials?.providerSpecificData?.clientId;
+    if (clientId !== undefined) params.client_id = clientId;
+    const clientSecret = config.clientSecret ?? credentials?.providerSpecificData?.clientSecret;
+    if (clientSecret !== undefined) params.client_secret = clientSecret;
+
     const response = await fetch(config.refreshUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
         Accept: "application/json",
       },
-      body: new URLSearchParams({
-        grant_type: "refresh_token",
-        refresh_token: refreshToken,
-        client_id: config.clientId,
-        client_secret: config.clientSecret,
-      }),
+      body: new URLSearchParams(params),
     });
 
     if (!response.ok) {
@@ -620,10 +626,13 @@ export async function refreshCopilotToken(githubAccessToken, log) {
 // CodeBuddy (Tencent) refresh — POST /v2/plugin/auth/token/refresh with the
 // refresh token carried in the X-Refresh-Token header (not a form body),
 // matching the official CodeBuddy CLI. Response: { code: 0, data: <token> }.
-export async function refreshCodebuddyToken(refreshToken, log) {
+// providerId selects the region ("codebuddy-cn" | "codebuddy-intl"); the
+// X-Domain header mirrors that provider's oauth baseUrl host.
+export async function refreshCodebuddyToken(refreshToken, log, providerId = "codebuddy-cn") {
   if (!refreshToken) return null;
-  return dedupRefresh("codebuddy-cn", refreshToken, async () => {
-    const oauth = PROVIDER_OAUTH["codebuddy-cn"] || {};
+  return dedupRefresh(providerId, refreshToken, async () => {
+    const oauth = PROVIDER_OAUTH[providerId] || {};
+    const xDomain = new URL(oauth.baseUrl).host;
     const response = await fetch(oauth.refreshUrl, {
       method: "POST",
       headers: {
@@ -631,7 +640,7 @@ export async function refreshCodebuddyToken(refreshToken, log) {
         Accept: "application/json",
         "User-Agent": oauth.userAgent,
         "X-Requested-With": "XMLHttpRequest",
-        "X-Domain": "copilot.tencent.com",
+        "X-Domain": xDomain,
         "X-Refresh-Token": refreshToken,
         "X-Auth-Refresh-Source": "plugin",
         "X-Product": "SaaS",

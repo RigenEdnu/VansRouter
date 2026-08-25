@@ -39,7 +39,7 @@ const PATTERN_THINKING = [
   { provider: "codex", pattern: "*gpt-5.6-terra*", levels: CODEX_GPT_5_6_LEVELS },
   { provider: "codex", pattern: "*gpt-5.6-luna*", levels: CODEX_GPT_5_6_LEVELS },
   { pattern: "*gpt-5.6-sol*", levels: ["none", "minimal", "low", "medium", "high", "xhigh", "max"] },
-  { pattern: "*claude*opus-5*", levels: L.CLAUDE_EFFORT },
+  { pattern: "*claude*opus-5*", levels: L.levelMax },
   { pattern: "*codex*", levels: ["low", "medium", "high", "xhigh"] }, // codex cannot disable thinking
 ];
 

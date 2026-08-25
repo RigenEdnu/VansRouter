@@ -2403,8 +2403,8 @@ exports[`GOLDEN buildUrl (default executor providers) > siliconflow → url (str
 
 exports[`GOLDEN buildUrl (default executor providers) > snowflake → url (stream + non-stream) 1`] = `
 {
-  "nonStream": "https://{account}.snowflakecomputing.com/api/v2",
-  "stream": "https://{account}.snowflakecomputing.com/api/v2",
+  "nonStream": "https://ACC123.snowflakecomputing.com/api/v2",
+  "stream": "https://ACC123.snowflakecomputing.com/api/v2",
 }
 `;
 

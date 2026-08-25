@@ -23,6 +23,8 @@ export default {
   },
   oauth: {
     defaultBaseUrl: "https://gitlab.com",
+    tokenUrl: "https://gitlab.com/oauth/token",
+    refreshUrl: "https://gitlab.com/oauth/token",
     authorizeUrlPath: "/oauth/authorize",
     tokenUrlPath: "/oauth/token",
     userInfoUrlPath: "/api/v4/user",

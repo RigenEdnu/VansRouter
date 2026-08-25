@@ -6,7 +6,7 @@ import { buildTtsProviderModels } from "../config/ttsModels.js";
 
 // oauth block is canonical for these fields; inject into transport so executors reading
 // this.config.{clientId,clientSecret,tokenUrl} keep working without duplicating in transport
-const OAUTH_INJECT_FIELDS = ["clientId", "clientSecret", "tokenUrl"];
+const OAUTH_INJECT_FIELDS = ["clientId", "clientSecret", "tokenUrl", "refreshUrl"];
 
 // transport: re-apply shared default (format:"openai") + inject oauth-canonical fields
 function buildTransport(transport, oauth) {

@@ -14,6 +14,9 @@ export default {
   transport: {
     baseUrl: "https://codestral.mistral.ai/v1/chat/completions",
     validateUrl: "https://codestral.mistral.ai/v1/models",
+    quirks: {
+      dropClientMetadata: true,
+    },
   },
   models: [
     { id: "codestral-2508", name: "codestral-2508" },

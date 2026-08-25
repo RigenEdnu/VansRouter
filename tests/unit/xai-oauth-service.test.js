@@ -5,13 +5,24 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 // either hang on real network calls or return undefined responses.
 vi.mock("open-sse/utils/proxyFetch.js", () => ({
   default: (url, options) => globalThis.fetch(url, options),
+  proxyAwareFetch: (url, options) => globalThis.fetch(url, options),
+  resolveAntigravityProxyConfig: vi.fn(),
+}));
+vi.mock("../../open-sse/utils/proxyFetch.js", () => ({
+  default: (url, options) => globalThis.fetch(url, options),
+  proxyAwareFetch: (url, options) => globalThis.fetch(url, options),
+  resolveAntigravityProxyConfig: vi.fn(),
 }));
 
 describe("xai/oauth service", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.resetModules();
     vi.restoreAllMocks();
     vi.stubGlobal("fetch", vi.fn());
+    const xaiService = await import("../../src/lib/oauth/services/xai.js");
+    xaiService._resetXaiDiscoveryCache?.();
+    const providers = await import("../../src/lib/oauth/providers.js");
+    providers._resetXaiDiscoveryCache?.();
   });
 
   it("validates discovered endpoints are https x.ai URLs", async () => {

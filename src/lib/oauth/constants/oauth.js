@@ -107,6 +107,7 @@ export const GITLAB_CONFIG = { ...PROVIDER_OAUTH["gitlab"] };
 
 // CodeBuddy (Tencent) OAuth Configuration (Browser OAuth Polling Flow)
 export const CODEBUDDY_CONFIG = { ...PROVIDER_OAUTH["codebuddy-cn"] };
+export const CODEBUDDY_INTL_CONFIG = { ...PROVIDER_OAUTH["codebuddy-intl"] };
 
 // Z.ai (ZCode) OAuth Configuration (Manual paste flow via zcode:// custom scheme)
 export const ZAI_CONFIG = { ...PROVIDER_OAUTH["zcode"] };

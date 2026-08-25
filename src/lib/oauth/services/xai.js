@@ -23,6 +23,10 @@ const BASE64_BLOCK_SIZE = 4;
 
 let cachedDiscovery = null;
 
+export function _resetXaiDiscoveryCache() {
+  cachedDiscovery = null;
+}
+
 export function validateOAuthEndpoint(rawUrl, field) {
   const value = String(rawUrl || "").trim();
   if (!value) throw new Error(`xai discovery ${field} is empty`);

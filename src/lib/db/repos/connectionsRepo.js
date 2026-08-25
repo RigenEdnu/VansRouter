@@ -108,7 +108,13 @@ export async function createProviderConnection(data) {
     const all = db.all(`SELECT * FROM providerConnections WHERE provider = ?`, [data.provider]).map(rowToConn);
 
     let existing = null;
-    if (data.authType === "oauth" && data.email) {
+    // Dedup precedence: cursor oauth rows key on machineId (stable even when
+    // profile-email extraction fails); other oauth rows key on email;
+    // apikey rows key on name.
+    // access_token: never dedup — user manages duplicates manually
+    if (data.provider === "cursor" && data.authType === "oauth" && data.providerSpecificData?.machineId) {
+      existing = all.find(c => c.provider === "cursor" && c.providerSpecificData?.machineId === data.providerSpecificData.machineId);
+    } else if (data.authType === "oauth" && data.email) {
       const incomingUsername = data.providerSpecificData?.username;
       const incomingWs = data.providerSpecificData?.chatgptAccountId;
       existing = all.find(c => {
@@ -144,7 +150,6 @@ export async function createProviderConnection(data) {
     } else if (data.authType === "apikey" && data.name) {
       existing = all.find(c => c.authType === "apikey" && c.name === data.name);
     }
-    // access_token: never dedup — user manages duplicates manually
 
     if (existing) {
       const merged = { ...existing, ...data, updatedAt: now };

@@ -62,6 +62,15 @@ export const ENDPOINT_DEFAULTS = {
   gemini: { chat: "/{model}:streamGenerateContent", models: "/models", test: "/models" }
 };
 
+// Derive the models-list / validation URL from a registry transport.
+// Explicit transport.validateUrl wins; otherwise strip known chat suffixes
+// (/chat/completions, /messages, /chatbot) and append the shared test path.
+export function deriveValidateUrl(regCfg) {
+  if (!regCfg?.baseUrl) return null;
+  if (regCfg.validateUrl) return regCfg.validateUrl;
+  return regCfg.baseUrl.replace(/\/(chat\/completions|messages|chatbot)$/, "") + ENDPOINT_DEFAULTS.openai.test;
+}
+
 // Deep-merge a provider entry over PROVIDER_DEFAULTS (defensive for missing transport)
 export function resolveProvider(entry) {
   const transport = (entry && entry.transport) || {};
