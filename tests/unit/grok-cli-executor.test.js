@@ -52,7 +52,12 @@ describe("grok-cli registry", () => {
     });
   });
 
-  it("maps effort virtual models to upstream grok-4.5", () => {
+  it("maps effort virtual models to upstream grok-4.5 and grok-4.6", () => {
+    expect(getModelUpstreamId("gcli", "grok-4.6-xhigh")).toBe("grok-4.6");
+    expect(getModelUpstreamId("gcli", "grok-4.6-high")).toBe("grok-4.6");
+    expect(getModelUpstreamId("gcli", "grok-4.6-medium")).toBe("grok-4.6");
+    expect(getModelUpstreamId("gcli", "grok-4.6-low")).toBe("grok-4.6");
+    expect(getModelUpstreamId("gcli", "grok-4.6")).toBe("grok-4.6");
     expect(getModelUpstreamId("gcli", "grok-4.5-high")).toBe("grok-4.5");
     expect(getModelUpstreamId("gcli", "grok-4.5-medium")).toBe("grok-4.5");
     expect(getModelUpstreamId("gcli", "grok-4.5-low")).toBe("grok-4.5");
@@ -323,6 +328,7 @@ describe("GrokCliExecutor", () => {
   });
 
   it("omits reasoning effort for models that reject it", () => {
+    expect(supportsGrokCliReasoningEffort("grok-4.6")).toBe(true);
     expect(supportsGrokCliReasoningEffort("grok-4.5")).toBe(true);
     expect(supportsGrokCliReasoningEffort("grok-build")).toBe(false);
     expect(supportsGrokCliReasoningEffort("grok-composer-2.5-fast")).toBe(false);
