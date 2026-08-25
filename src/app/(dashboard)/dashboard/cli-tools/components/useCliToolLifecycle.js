@@ -65,7 +65,9 @@ export function useCliToolLifecycle({ apiKeys, baseUrl, cloudEnabled, initialSta
     onToggle();
   }, [isExpanded, initializeCard, onToggle]);
 
-  useEffect(() => { initializeCard(); }, [initializeCard]);
+  useEffect(() => {
+    if (isExpanded) initializeCard();
+  }, [isExpanded, initializeCard]);
 
   const selectedApiKey = selectedApiKeyOverride ?? (getInitialApiKey ? getInitialApiKey(state.status, apiKeys) : (apiKeys?.length > 0 ? apiKeys[0].key : ""));
   const getEffectiveBaseUrl = useCallback(() => {

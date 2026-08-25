@@ -185,6 +185,18 @@ select {
   --color-warning: var(--color-warning);
   --color-info: var(--color-info);
 
+  /* Theme token aliases for phantom class backwards compatibility */
+  --color-background: var(--color-bg);
+  --color-text-primary: var(--color-text-main);
+  --color-bg-subtle: var(--color-surface-2);
+  --color-bg-hover: var(--color-surface-3);
+  --color-bg-secondary: var(--color-surface-2);
+  --color-bg-tertiary: var(--color-surface-3);
+  --color-surface-hover: var(--color-surface-2);
+  --color-border-primary: var(--color-border);
+  --color-input: var(--color-surface-2);
+  --color-error: var(--color-danger);
+
   /* Static fallbacks (explicit per-mode usage if needed) */
   --color-bg-light: #FCFBF9;
   --color-bg-dark: #1a1a1a;

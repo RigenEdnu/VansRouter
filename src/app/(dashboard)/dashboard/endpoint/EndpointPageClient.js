@@ -493,6 +493,7 @@ export default function APIPageClient({ machineId }) {
     setEditSaving(true);
     try {
       const body = {
+        name: editName.trim() || editingKey.name || "",
         allowedProviders: editProvidersAll ? null : editProviders,
         allowedCombos: editCombosAll ? null : editCombos,
         allowedKinds: editKindsAll ? null : editKinds,
@@ -1708,27 +1709,35 @@ export default function APIPageClient({ machineId }) {
               </label>
             </div>
             {!editProvidersAll && (
-              <div className="max-h-60 overflow-y-auto border border-border-subtle rounded-lg p-2 space-y-1">
-                {providerList.length === 0 ? (
-                  <p className="text-xs text-text-muted p-2">No providers configured.</p>
-                ) : (
-                  providerList.map((p) => {
-                    const checked = editProviders.includes(p.id);
-                    return (
-                      <label key={p.id} className={`flex items-center gap-2 px-2 py-2 rounded text-xs cursor-pointer transition-colors ${checked ? "bg-primary/10 text-primary" : "hover:bg-surface-2"}`}>
-                        <input type="checkbox" checked={checked} onChange={() => toggleEditProvider(p.id)} className="rounded" />
-                        <div className="flex-1 min-w-0">
-                          <span className="font-medium">{p.displayName}</span>
-                          {p.prefix && (
-                            <span className="ml-1.5 text-[10px] px-1 py-0.5 rounded bg-surface-2 text-text-muted font-mono">{p.prefix}</span>
-                          )}
-                        </div>
-                        <span className="text-text-muted text-[10px] shrink-0">{p.count} conn</span>
-                      </label>
-                    );
-                  })
+              <>
+                <div className="max-h-60 overflow-y-auto border border-border-subtle rounded-lg p-2 space-y-1">
+                  {providerList.length === 0 ? (
+                    <p className="text-xs text-text-muted p-2">No providers configured.</p>
+                  ) : (
+                    providerList.map((p) => {
+                      const checked = editProviders.includes(p.id);
+                      return (
+                        <label key={p.id} className={`flex items-center gap-2 px-2 py-2 rounded text-xs cursor-pointer transition-colors ${checked ? "bg-primary/10 text-primary" : "hover:bg-surface-2"}`}>
+                          <input type="checkbox" checked={checked} onChange={() => toggleEditProvider(p.id)} className="rounded" />
+                          <div className="flex-1 min-w-0">
+                            <span className="font-medium">{p.displayName}</span>
+                            {p.prefix && (
+                              <span className="ml-1.5 text-[10px] px-1 py-0.5 rounded bg-surface-2 text-text-muted font-mono">{p.prefix}</span>
+                            )}
+                          </div>
+                          <span className="text-text-muted text-[10px] shrink-0">{p.count} conn</span>
+                        </label>
+                      );
+                    })
+                  )}
+                </div>
+                {editProviders.length === 0 && (
+                  <p className="text-xs text-warning bg-warning/10 border border-warning/20 rounded px-2 py-1 mt-1.5 flex items-center gap-1.5">
+                    <span className="material-symbols-outlined text-[14px]">warning</span>
+                    <span>Warning: Zero providers selected. This key will have NO access to any providers (Deny All).</span>
+                  </p>
                 )}
-              </div>
+              </>
             )}
             {editProvidersAll && <p className="text-xs text-text-muted">This key can access all providers ({providerList.length}).</p>}
           </div>

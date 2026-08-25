@@ -4,10 +4,10 @@ import { useEffect, useRef } from "react";
 import { cn } from "@/shared/utils/cn";
 
 const DRAWER_WIDTHS = {
-  sm: "w-[400px]",
-  md: "w-[500px]",
-  lg: "w-[600px]",
-  xl: "w-[800px]",
+  sm: "w-full sm:w-[400px] max-w-full",
+  md: "w-full sm:w-[500px] max-w-full",
+  lg: "w-full sm:w-[600px] max-w-full",
+  xl: "w-full sm:w-[800px] max-w-full",
   full: "w-full",
 };
 
@@ -55,7 +55,7 @@ export default function Drawer({
 
       {/* Drawer panel */}
       <div className={cn(
-        "absolute right-0 top-0 h-full bg-surface flex flex-col",
+        "absolute right-0 top-0 h-full bg-surface flex flex-col max-w-full",
         "shadow-[var(--shadow-elev)]",
         "slide-in-right",
         "border-l border-border-subtle",

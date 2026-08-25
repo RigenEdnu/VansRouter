@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeAll } from "vitest";
 import { Linter } from "eslint";
 import path from "path";
 import { pathToFileURL } from "url";
@@ -20,9 +20,15 @@ const configPath = path.resolve("eslint.config.mjs");
 const configUrl = pathToFileURL(configPath).href;
 
 describe("eslint no-undef config (eslint.config.mjs)", () => {
-  it("flags an undefined identifier in a server-module file", async () => {
-    const cfg = (await import(configUrl)).default;
-    const linter = new Linter();
+  let cfg;
+  let linter;
+
+  beforeAll(async () => {
+    cfg = (await import(configUrl)).default;
+    linter = new Linter();
+  });
+
+  it("flags an undefined identifier in a server-module file", () => {
     const code = `export function broken() { return fooBar + 1; }`;
     const messages = linter.verify(code, cfg, { filename: "src/lib/server-bad.js" });
     const undef = messages.filter(
@@ -31,18 +37,14 @@ describe("eslint no-undef config (eslint.config.mjs)", () => {
     expect(undef.length, "expected no-undef to flag fooBar").toBeGreaterThan(0);
   });
 
-  it("does NOT flag Node globals (Buffer, process, setTimeout) in a server-module file", async () => {
-    const cfg = (await import(configUrl)).default;
-    const linter = new Linter();
+  it("does NOT flag Node globals (Buffer, process, setTimeout) in a server-module file", () => {
     const code = `export const x = Buffer.from("hi").length + process.env.NODE_ENV + setTimeout;`;
     const messages = linter.verify(code, cfg, { filename: "src/lib/server-good.js" });
     const undef = messages.filter((m) => m.ruleId === "no-undef");
     expect(undef.map((m) => m.message)).toEqual([]);
   });
 
-  it("flags an undefined identifier in a dashboard client-component file", async () => {
-    const cfg = (await import(configUrl)).default;
-    const linter = new Linter();
+  it("flags an undefined identifier in a dashboard client-component file", () => {
     const code = `export function broken() { return bazQux + 1; }`;
     const messages = linter.verify(code, cfg, {
       filename: "src/app/(dashboard)/client-bad.js",
@@ -53,12 +55,10 @@ describe("eslint no-undef config (eslint.config.mjs)", () => {
     expect(undef.length, "expected no-undef to flag bazQux").toBeGreaterThan(0);
   });
 
-  it("does NOT flag identifiers declared at function scope in dashboard client files", async () => {
+  it("does NOT flag identifiers declared at function scope in dashboard client files", () => {
     // Regression guard for the original bug: variables returned by hooks
     // (useState, useReducer, etc.) MUST be visible to nested JSX in the
     // same component. If ESLint ever starts flagging them, this test fails.
-    const cfg = (await import(configUrl)).default;
-    const linter = new Linter();
     const code = `export function Good() {
       const [name, setName] = ["x", () => {}];
       const handler = () => setName("y");
@@ -71,9 +71,7 @@ describe("eslint no-undef config (eslint.config.mjs)", () => {
     expect(undef.map((m) => m.message)).toEqual([]);
   });
 
-  it("flags a clearly undefined identifier in a dashboard client file", async () => {
-    const cfg = (await import(configUrl)).default;
-    const linter = new Linter();
+  it("flags a clearly undefined identifier in a dashboard client file", () => {
     const code = `export const a = thisIdentifierIsDefinitelyNotDefined123;`;
     const messages = linter.verify(code, cfg, {
       filename: "src/app/(dashboard)/should-error.js",
@@ -85,9 +83,7 @@ describe("eslint no-undef config (eslint.config.mjs)", () => {
     ).toBeDefined();
   });
 
-  it("does NOT flag SW `clients` global in cli/app/public/sw.js", async () => {
-    const cfg = (await import(configUrl)).default;
-    const linter = new Linter();
+  it("does NOT flag SW `clients` global in cli/app/public/sw.js", () => {
     const code = `self.addEventListener("fetch", (e) => { clients.claim(); });`;
     const messages = linter.verify(code, cfg, { filename: "cli/app/public/sw.js" });
     const undef = messages.filter((m) => m.ruleId === "no-undef");

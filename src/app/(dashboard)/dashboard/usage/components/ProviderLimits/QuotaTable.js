@@ -154,7 +154,7 @@ export default function QuotaTable({
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full table-fixed text-left">
+        <table className="w-full min-w-[420px] table-fixed text-left">
           <tbody>
             {currentPageRows.map((quota) => {
               const colors = getColorClasses(quota.remaining);

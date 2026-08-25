@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Card, Button } from "@/shared/components";
 import { useCopyToClipboard } from "@/shared/hooks/useCopyToClipboard";
+import { useTheme } from "@/shared/hooks/useTheme";
 import dynamic from "next/dynamic";
 
 const Editor = dynamic(() => import("@monaco-editor/react"), { ssr: false });
@@ -43,6 +44,7 @@ const EDITOR_OPTIONS = {
 };
 
 export default function TranslatorPage() {
+  const { isDark } = useTheme();
   const [contents, setContents] = useState({});
   const [expanded, setExpanded] = useState({ 1: true });
   const [loading, setLoading] = useState({});
@@ -279,7 +281,7 @@ export default function TranslatorPage() {
                         setContent(step.id, v || "");
                         if (step.id === 1) detectMeta(v || "");
                       }}
-                      theme="vs-dark"
+                      theme={isDark ? "vs-dark" : "light"}
                       options={EDITOR_OPTIONS}
                     />
                   </div>

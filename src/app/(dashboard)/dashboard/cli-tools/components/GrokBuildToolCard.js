@@ -353,7 +353,7 @@ export default function GrokBuildToolCard({
                 ))}
               </div>
 
-              {message && <div className={`flex items-center gap-2 px-2 py-1.5 rounded text-xs ${message.type === "success" ? "bg-green-500/10 text-green-600" : "bg-red-500/10 text-red-600"}`}><span className="material-symbols-outlined text-[14px]">{message.type === "success" ? "check_circle" : "error"}</span><span>{message.text}</span></div>}
+              {message && <div className={`flex items-center gap-2 px-2 py-1.5 rounded text-xs ${message.type === "success" ? "bg-green-500/10 text-green-600 dark:text-green-400 dark:bg-green-500/20" : "bg-red-500/10 text-red-600 dark:text-red-400 dark:bg-red-500/20"}`}><span className="material-symbols-outlined text-[14px]">{message.type === "success" ? "check_circle" : "error"}</span><span>{message.text}</span></div>}
 
               <div className="flex flex-col sm:flex-row sm:items-center gap-2">
                 <Button variant="primary" size="sm" onClick={handleApply} disabled={!selectedModel} loading={applying} className="w-full sm:w-auto"><span className="material-symbols-outlined text-[14px] mr-1">save</span>Apply</Button>

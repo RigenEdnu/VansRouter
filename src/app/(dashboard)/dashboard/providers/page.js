@@ -391,7 +391,7 @@ export default function ProvidersPage() {
               variant="secondary"
               icon="add"
               onClick={() => setShowAddCompatibleModal(true)}
-              className="w-full !bg-white !text-black hover:!bg-gray-100 sm:w-auto"
+              className="w-full sm:w-auto"
             >
               Add OpenAI Compatible
             </Button>
@@ -720,7 +720,7 @@ function ProviderCard({ providerId, provider, stats, authType, onToggle, circuit
                   <>
                     {getStatusDisplay(connected, error, errorCode)}
                     {circuitBreaker && (
-                      <CircuitBreakerBadge status={circuitBreaker} onReset={() => onResetCircuit(providerId)} />
+                      <CircuitBreakerBadge status={circuitBreaker} onReset={() => onResetCircuit(circuitBreaker?.name || providerId)} />
                     )}
                     {errorTime && (
                       <span className="text-text-muted">{errorTime}</span>

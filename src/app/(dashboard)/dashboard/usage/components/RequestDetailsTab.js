@@ -203,28 +203,24 @@ export default function RequestDetailsTab() {
   const [providerNameCache, setProviderNameCache] = useState(null);
   // Filter input state (not applied until Search clicked)
   const [filterProvider, setFilterProvider] = useState("");
-  const [filterStart, setFilterStart] = useState("");
+  const [filterStart, setFilterStart] = useState(() => {
+    if (typeof window === "undefined") return "";
+    const d = new Date();
+    d.setDate(d.getDate() - 7);
+    return d.toISOString().slice(0, 16);
+  });
   const [filterEnd, setFilterEnd] = useState("");
   // Applied filter state (triggers fetch)
   const [appliedProvider, setAppliedProvider] = useState("");
-  const [appliedStart, setAppliedStart] = useState("");
+  const [appliedStart, setAppliedStart] = useState(() => {
+    if (typeof window === "undefined") return "";
+    const d = new Date();
+    d.setDate(d.getDate() - 7);
+    return d.toISOString().slice(0, 16);
+  });
   const [appliedEnd, setAppliedEnd] = useState("");
   // Guard: don't fetch until default filter is ready
-  const [isFilterReady, setIsFilterReady] = useState(false);
-
-  // Set default date range to last 7 days after mount (avoid SSR mismatch)
-  useEffect(() => {
-    // Small delay to let server warm up before first fetch
-    const t = setTimeout(() => {
-      const d = new Date();
-      d.setDate(d.getDate() - 7);
-      const weekAgo = d.toISOString().slice(0, 16);
-      setFilterStart(weekAgo);
-      setAppliedStart(weekAgo);
-      setIsFilterReady(true);
-    }, 500);
-    return () => clearTimeout(t);
-  }, []);
+  const [isFilterReady, setIsFilterReady] = useState(true);
 
   // Fetch providers once
   useEffect(() => {

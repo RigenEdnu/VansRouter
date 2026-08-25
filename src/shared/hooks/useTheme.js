@@ -36,17 +36,6 @@ export function useTheme() {
     initTheme();
   }, [initTheme]);
 
-  // Listen for system theme changes when theme is "system"
-  useEffect(() => {
-    if (theme !== "system") return;
-
-    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-    const handleChange = () => initTheme();
-
-    mediaQuery.addEventListener("change", handleChange);
-    return () => mediaQuery.removeEventListener("change", handleChange);
-  }, [theme, initTheme]);
-
   // Compute isDark from current state (no effect needed)
   const isDark = theme === "dark" || (theme === "system" && systemPrefersDark);
 
