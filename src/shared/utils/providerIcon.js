@@ -71,7 +71,7 @@ const POPULAR_PROVIDERS = [
 /** Non-blocking background preloader for provider icon webp images */
 export function preloadProviderIcons(providerIds = POPULAR_PROVIDERS) {
   if (typeof window === "undefined") return;
-  const schedule = window.requestIdleCallback || ((cb) => setTimeout(cb, 200));
+  const schedule = window.requestIdleCallback || ((cb) => setTimeout(cb, 1000));
   schedule(() => {
     for (const pId of providerIds) {
       const src = getProviderIconSrc(pId);
@@ -80,6 +80,6 @@ export function preloadProviderIcons(providerIds = POPULAR_PROVIDERS) {
         img.src = src;
       }
     }
-  });
+  }, { timeout: 2000 });
 }
 

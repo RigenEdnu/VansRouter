@@ -21,26 +21,26 @@ export default function GetStarted() {
             
             <div className="flex flex-col gap-6">
               <div className="flex gap-4">
-                <div className="flex-none w-8 h-8 rounded-full bg-[#6366f1]/20 text-[#6366f1] flex items-center justify-center font-bold">1</div>
+                <div className="flex-none w-8 h-8 rounded-full bg-[#6366f1]/20 text-[#818cf8] flex items-center justify-center font-bold">1</div>
                 <div>
-                  <h4 className="font-bold text-lg">Install VansAI</h4>
-                  <p className="text-sm text-gray-500 mt-1">Run npx command to start the server instantly</p>
+                  <h3 className="font-bold text-lg">Install VansAI</h3>
+                  <p className="text-sm text-gray-400 mt-1">Run npx command to start the server instantly</p>
                 </div>
               </div>
               
               <div className="flex gap-4">
-                <div className="flex-none w-8 h-8 rounded-full bg-[#6366f1]/20 text-[#6366f1] flex items-center justify-center font-bold">2</div>
+                <div className="flex-none w-8 h-8 rounded-full bg-[#6366f1]/20 text-[#818cf8] flex items-center justify-center font-bold">2</div>
                 <div>
-                  <h4 className="font-bold text-lg">Open Dashboard</h4>
-                  <p className="text-sm text-gray-500 mt-1">Configure providers and API keys via web interface</p>
+                  <h3 className="font-bold text-lg">Open Dashboard</h3>
+                  <p className="text-sm text-gray-400 mt-1">Configure providers and API keys via web interface</p>
                 </div>
               </div>
               
               <div className="flex gap-4">
-                <div className="flex-none w-8 h-8 rounded-full bg-[#6366f1]/20 text-[#6366f1] flex items-center justify-center font-bold">3</div>
+                <div className="flex-none w-8 h-8 rounded-full bg-[#6366f1]/20 text-[#818cf8] flex items-center justify-center font-bold">3</div>
                 <div>
-                  <h4 className="font-bold text-lg">Route Requests</h4>
-                  <p className="text-sm text-gray-500 mt-1">Point your CLI tools to http://127.0.0.1:20128</p>
+                  <h3 className="font-bold text-lg">Route Requests</h3>
+                  <p className="text-sm text-gray-400 mt-1">Point your CLI tools to http://127.0.0.1:20128</p>
                 </div>
               </div>
             </div>
