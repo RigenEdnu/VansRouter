@@ -374,7 +374,8 @@ export async function getGrokCliUsage(accessToken, providerSpecificData = null, 
     }
 
     const parsed = parseGrokCliBilling(billing, user);
-    parsed.plan = planFromAccessToken(accessToken) || parsed.plan;
+    // Prefer authoritative /v1/user plan if present; fallback to JWT claim
+    parsed.plan = parsed.plan || planFromAccessToken(accessToken);
 
     if (!parsed.quotas || Object.keys(parsed.quotas).length === 0) {
       const grpcQuotas = quotasFromGrpcCredits(

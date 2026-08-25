@@ -2,7 +2,7 @@ import { getProviderConnectionById, updateProviderConnection } from "@/lib/local
 import { resolveConnectionProxyConfig } from "@/lib/network/connectionProxy";
 import { testProxyUrl } from "@/lib/network/proxyTest";
 import { isOpenAICompatibleProvider, isAnthropicCompatibleProvider } from "@/shared/constants/providers";
-import { getDefaultModel } from "open-sse/config/providerModels.js";
+import { getDefaultModel, getModelUpstreamId } from "open-sse/config/providerModels.js";
 import { resolveOllamaLocalHost, PROVIDERS } from "open-sse/config/providers.js";
 import {
   refreshProviderCredentials,
@@ -854,6 +854,7 @@ async function testApiKeyConnection(connection, effectiveProxy = null) {
       }
       case "blackbox": {
         const baseUrl = PROVIDERS["blackbox"]?.baseUrl || "https://api.blackbox.ai/v1/chat/completions";
+        const probeModel = getModelUpstreamId("blackbox", "gpt-5.4") || "blackboxai/openai/gpt-5.4";
         const res = await fetchWithConnectionProxy(baseUrl, {
           method: "POST",
           headers: {
@@ -861,13 +862,18 @@ async function testApiKeyConnection(connection, effectiveProxy = null) {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            model: "blackboxai/openai/gpt-4o",
+            model: probeModel,
             messages: [{ role: "user", content: "ping" }],
             max_tokens: 1,
             stream: false,
           }),
         }, effectiveProxy);
-        return { valid: res.status !== 401 && res.status !== 403, error: (res.status === 401 || res.status === 403) ? "Invalid API key" : null };
+        const valid = res.ok || res.status === 400;
+        let error = null;
+        if (!valid) {
+          error = (res.status === 401 || res.status === 403) ? "Invalid API key" : `Blackbox probe failed (${res.status})`;
+        }
+        return { valid, error };
       }
       case "agentrouter": {
         const valid = await validateAgentRouterConnection(

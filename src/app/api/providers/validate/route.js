@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getProviderNodeById } from "@/models";
 import { isOpenAICompatibleProvider, isAnthropicCompatibleProvider, isCustomEmbeddingProvider, AI_PROVIDERS } from "@/shared/constants/providers";
-import { getDefaultModel } from "open-sse/config/providerModels.js";
+import { getDefaultModel, getModelUpstreamId } from "open-sse/config/providerModels.js";
 import { resolveOllamaLocalHost, resolveXiaomiTokenplanBaseUrl, PROVIDERS, PROVIDER_OAUTH } from "open-sse/config/providers.js";
 import { getKimchiUserAgent } from "open-sse/utils/kimchiUserAgent.js";
 import { openaiToCommandCodeRequest } from "open-sse/translator/request/openai-to-commandcode.js";
@@ -471,6 +471,7 @@ export async function POST(request) {
         }
 
         case "blackbox": {
+          const probeModel = getModelUpstreamId("blackbox", "gpt-5.4") || "blackboxai/openai/gpt-5.4";
           const res = await fetch("https://api.blackbox.ai/v1/chat/completions", {
             method: "POST",
             headers: {
@@ -478,13 +479,13 @@ export async function POST(request) {
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              model: "blackboxai/openai/gpt-4o",
+              model: probeModel,
               messages: [{ role: "user", content: "test" }],
               max_tokens: 1,
             }),
           });
-          // Returns 401/403 for invalid key, 200 for valid, 400 for malformed
-          isValid = res.status !== 401 && res.status !== 403;
+          // Returns 200 for valid, 400 for malformed payload with valid key, 401/403 for invalid
+          isValid = res.ok || res.status === 400;
           break;
         }
 
