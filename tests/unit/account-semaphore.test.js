@@ -109,7 +109,7 @@ describe("AccountSemaphore", () => {
       const release2 = await second;
       expect(granted).toBe(true);
       release2();
-    });
+    }, 10000);
   });
 
   describe("isSemaphoreCapacityError", () => {

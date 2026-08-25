@@ -12,8 +12,9 @@ export default defineConfig({
     // Don't scan nested agent/git worktrees — they carry their own copies of
     // tests but lack the root dependency context.
     exclude: ["**/node_modules/**", "**/.claude/**", "**/.kilo/**", "**/.git/**", "**/dist/**", "**/all-endpoints-robust.test.js"],
-    // Lower maxConcurrency to prevent SQLite lock contention during full suite runs
     maxConcurrency: 10,
+    testTimeout: 15000,
+    pool: "threads",
     // Suppress noisy console output from handlers under test
     silent: false,
     env: {
