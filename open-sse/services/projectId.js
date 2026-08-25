@@ -203,7 +203,7 @@ async function onboardUser(accessToken, tierID, externalSignal, endpoints, provi
 
     const reqBody = { tierId: tierID, metadata: LOAD_CODE_ASSIST_METADATA };
     const headers = provider === "antigravity" ? ANTIGRAVITY_LOAD_CODE_ASSIST_HEADERS : LOAD_CODE_ASSIST_HEADERS;
-    const MAX_ATTEMPTS = 5;
+    const MAX_ATTEMPTS = 3;
 
     for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
         // Bail out immediately if the connection was removed
@@ -211,7 +211,7 @@ async function onboardUser(accessToken, tierID, externalSignal, endpoints, provi
 
         // Per-attempt timeout controller; forwards external abort as well
         const localCtrl = new AbortController();
-        const timeoutId = setTimeout(() => localCtrl.abort(), 30_000);
+        const timeoutId = setTimeout(() => localCtrl.abort(), 5_000);
         const forwardAbort = () => localCtrl.abort();
         externalSignal?.addEventListener("abort", forwardAbort);
 

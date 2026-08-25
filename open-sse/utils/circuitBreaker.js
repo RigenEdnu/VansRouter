@@ -22,8 +22,10 @@ export const STATE = {
 // Only provider-level errors (5xx + timeout) count toward the circuit breaker.
 // 429 is per-account rate limiting, NOT a provider-wide failure — including it
 // would trip the breaker after 5 accounts get rate-limited, blocking all
-// remaining accounts for no reason.
-export const PROVIDER_FAILURE_ERROR_CODES = new Set([408, 500, 502, 503, 504]);
+// remaining accounts for no reason. 520/524 are Cloudflare-edge codes whose
+// root cause is the origin (unknown error / origin timeout), so they are
+// provider-level too.
+export const PROVIDER_FAILURE_ERROR_CODES = new Set([408, 500, 502, 503, 504, 520, 524]);
 
 /** Failure kinds for per-kind thresholds. */
 export const FAILURE_KIND = {

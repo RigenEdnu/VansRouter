@@ -41,6 +41,7 @@ function ensureGate(semaphoreKey, maxConcurrency) {
     maxConcurrency,
     queue: [],
     blockedUntil: null,
+    blockTimer: null,
     cleanupTimer: null,
   };
   gates.set(semaphoreKey, gate);
@@ -53,6 +54,10 @@ function cleanupGateIfIdle(semaphoreKey, gate) {
     if (gate.cleanupTimer) {
       clearTimeout(gate.cleanupTimer);
       gate.cleanupTimer = null;
+    }
+    if (gate.blockTimer) {
+      clearTimeout(gate.blockTimer);
+      gate.blockTimer = null;
     }
     gates.delete(semaphoreKey);
   }
@@ -180,6 +185,14 @@ export function markBlocked(semaphoreKey, durationMs) {
   if (!gate.blockedUntil || gate.blockedUntil < until) {
     gate.blockedUntil = until;
   }
+  // Auto-wakeup: drain queued waiters when the block expires instead of
+  // leaving them stuck until the next acquire() call.
+  if (gate.blockTimer) clearTimeout(gate.blockTimer);
+  gate.blockTimer = setTimeout(() => {
+    gate.blockTimer = null;
+    drainQueue(semaphoreKey, gate);
+  }, gate.blockedUntil - Date.now());
+  if (typeof gate.blockTimer.unref === "function") gate.blockTimer.unref();
 }
 
 /**

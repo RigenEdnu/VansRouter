@@ -74,6 +74,7 @@ export const ERROR_RULES = [
   { status: 402, cooldownMs: COOLDOWN.long },
   { status: 403, cooldownMs: COOLDOWN.long },
   { status: 404, cooldownMs: COOLDOWN.long },
+  { status: 499, shouldFallback: false, cooldownMs: 0 },
   { status: 429, backoff: true },
 ];
 

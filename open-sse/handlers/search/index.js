@@ -232,7 +232,7 @@ export async function handleSearchCore({ body, provider, providerConfig, credent
 
   if (result.success) {
     await onRequestSuccess?.();
-    return result.response || successResult(result.data);
+    return result.response ? { success: true, status: 200, response: result.response } : successResult(result.data);
   }
 
   // 3. Failover within global timeout for retriable errors

@@ -26,11 +26,21 @@ async function getToken() {
   return cache.token;
 }
 
+function escapeXml(str) {
+  return String(str || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
+}
+
 async function ttsRequest(text, voiceId, token) {
   const parts = voiceId.split("-");
   const xmlLang = parts.slice(0, 2).join("-");
   const gender = voiceId.toLowerCase().includes("male") ? "Male" : "Female";
-  const ssml = `<speak version='1.0' xml:lang='${xmlLang}'><voice xml:lang='${xmlLang}' xml:gender='${gender}' name='${voiceId}'><prosody rate='0.00%'>${text}</prosody></voice></speak>`;
+  const safeText = escapeXml(text);
+  const ssml = `<speak version='1.0' xml:lang='${escapeXml(xmlLang)}'><voice xml:lang='${escapeXml(xmlLang)}' xml:gender='${escapeXml(gender)}' name='${escapeXml(voiceId)}'><prosody rate='0.00%'>${safeText}</prosody></voice></speak>`;
   const body = new URLSearchParams();
   body.append("ssml", ssml);
   body.append("token", token.token);

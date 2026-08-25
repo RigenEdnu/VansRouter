@@ -6,10 +6,12 @@ const CC_ENTRYPOINT = "sdk-cli";
 
 // Generate billing header matching real Claude Code 2.1.92+ format:
 // x-anthropic-billing-header: cc_version=<ver>.<build>; cc_entrypoint=sdk-cli; cch=<hash>;
-function generateBillingHeader(payload) {
-  const content = JSON.stringify(payload);
-  const cch = createHash("sha256").update(content).digest("hex").slice(0, 5);
-  const buildHash = randomBytes(2).toString("hex").slice(0, 3);
+// Deterministic per (apiKey, sessionId): random bytes here would change system[0]
+// every request and kill Anthropic prompt-cache prefix hits.
+function generateBillingHeader(apiKey, sessionId) {
+  const seed = `${apiKey || ""}:${sessionId || ""}`;
+  const cch = createHash("sha256").update(seed).digest("hex").slice(0, 5);
+  const buildHash = createHash("sha256").update(`build:${seed}`).digest("hex").slice(0, 3);
   return `x-anthropic-billing-header: cc_version=${CLAUDE_VERSION}.${buildHash}; cc_entrypoint=${CC_ENTRYPOINT}; cch=${cch};`;
 }
 
@@ -141,7 +143,7 @@ export function applyCloaking(body, apiKey, sessionId) {
   const result = { ...body };
 
   // Inject billing header as system[0], preserve existing system blocks
-  const billingText = generateBillingHeader(body);
+  const billingText = generateBillingHeader(apiKey, sessionId);
   const billingBlock = { type: "text", text: billingText };
 
   if (Array.isArray(result.system)) {

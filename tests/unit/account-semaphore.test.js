@@ -91,6 +91,25 @@ describe("AccountSemaphore", () => {
         release();
       }
     });
+
+    it("wakes queued waiters automatically when the block expires", async () => {
+      const key = buildAccountSemaphoreKey({ provider: "mark-blocked-wake", accountKey: "acc" });
+      const release = await acquire(key, { maxConcurrency: 1 });
+      let granted = false;
+      markBlocked(key, 80);
+      const second = acquire(key, { maxConcurrency: 1, timeoutMs: 5000 }).then((rel) => {
+        granted = true;
+        return rel;
+      });
+      // Slot frees up but the gate is blocked — waiter must stay queued.
+      release();
+      await new Promise((r) => setTimeout(r, 30));
+      expect(granted).toBe(false);
+      // Granted by the block-expiry wake timer alone — no further acquire() call.
+      const release2 = await second;
+      expect(granted).toBe(true);
+      release2();
+    });
   });
 
   describe("isSemaphoreCapacityError", () => {

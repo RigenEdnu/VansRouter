@@ -97,7 +97,8 @@ export class DefaultExecutor extends BaseExecutor {
       const result = await super.execute(args);
       attempt++;
       if (attempt >= maxAttempts) return result;
-      if (!result.response?.ok || result.response.status >= 500) return result;
+      // Streams bypass body peeking: buffering up to 8KB here delays TTFT.
+      if (args.stream || !result.response?.ok || result.response.status >= 500) return result;
       const peek = await this._peekTransientBodyError(result.response);
       if (!peek.matched) {
         if (peek.replacementBody) {
@@ -258,10 +259,10 @@ export class DefaultExecutor extends BaseExecutor {
       return `${this.config.baseUrl}${this.config.urlSuffix}`;
     }
     const url = this.config.baseUrl;
-    if (url?.includes("{accountId}")) {
-      const accountId = credentials?.providerSpecificData?.accountId;
+    if (url?.includes("{accountId}") || url?.includes("{account}")) {
+      const accountId = credentials?.providerSpecificData?.accountId || credentials?.providerSpecificData?.account;
       if (!accountId) throw new Error(`${this.provider} requires accountId in providerSpecificData`);
-      return url.replace("{accountId}", accountId);
+      return url.replace("{accountId}", accountId).replace("{account}", accountId);
     }
     return url;
   }
