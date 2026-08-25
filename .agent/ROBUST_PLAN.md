@@ -210,28 +210,24 @@
 
 ### E. Temuan Audit UI/UX Caching, Animasi, & Mobile Responsiveness (Audit 10 Subagent)
 1. **Redundant Background Fetches on Mount**:
-   - `src/app/(dashboard)/dashboard/cli-tools/components/useCliToolLifecycle.js:68`: `initializeCard()` terpanggil unconditionally saat mount walaupun card collapsed. 14+ CLI tool card menembak `/api/cli-tools/*` dan `/api/models/alias` sekaligus.
-   - **Solusi**: Hanya jalankan `initializeCard()` jika `isExpanded === true`.
+   - `src/app/(dashboard)/dashboard/cli-tools/components/useCliToolLifecycle.js:68`: `initializeCard()` hanya dijalankan saat `isExpanded === true`, mencegah 14+ CLI tool card menembak `/api/cli-tools/*` dan `/api/models/alias` sekaligus saat halaman dibuka.
 2. **Double Theme Event Listener**:
-   - `src/shared/hooks/useTheme.js:40-48`: `useSyncExternalStore` sudah subscribe ke `matchMedia`, namun ada duplikat `useEffect` manual listener yang memicu double DOM mutation saat OS theme berganti.
-   - **Solusi**: Hapus `useEffect` manual pada lines 40-48.
+   - `src/shared/hooks/useTheme.js:40-48`: Listener ganda `matchMedia` manual telah dihapus karena reaktivitas sudah ditangani secara aman oleh `useSyncExternalStore`.
 3. **Orphaned Dead Component**:
-   - `src/app/(dashboard)/dashboard/providers/ProvidersClient.js`: File 1175 baris tidak terpakai karena telah digantikan oleh `src/app/(dashboard)/dashboard/providers/page.js` ("use client").
-   - **Solusi**: Hapus file `ProvidersClient.js`.
-4. **Broken Tailwind Theme Tokens (Phantom Classes)**:
-   - `bg-background` digunakan pada 35+ file input/select (`ModelsCard.js:71`, `ConnectionsCard.js:229`, `TtsExampleCard.js:280`).
-   - `text-text-primary` digunakan pada 25+ elemen (`ProviderLimits/index.js:795`, `QuotaTable.js:172`).
-   - `bg-bg-subtle`, `bg-bg-hover`, `bg-bg-secondary`, `bg-bg-tertiary`, `bg-surface-hover`, `border-border-primary`, `bg-input`, `text-error`.
-   - **Solusi**: Mapping alias token di `@theme inline` dalam `src/app/globals.css` atau ganti ke token resmi (`bg-surface-2`, `text-text-main`, `border-border`, `text-danger`).
-5. **Mobile Viewport Overflow (CLS & Clipping)**:
-   - `src/shared/components/Drawer.js:7-12`: `DRAWER_WIDTHS` fixed `w-[600px]`/`w-[800px]` tanpa `max-w-full`, menyebabkan horizontal scrollbar / clipping pada mobile screen (<430px).
-   - `src/app/(dashboard)/dashboard/pxpipe/PxpipeClient.js:209`: Table 8 kolom tanpa `min-w-[700px]` squashing angka.
-   - `src/app/(dashboard)/dashboard/usage/components/ProviderLimits/QuotaTable.js:157`: Tambahkan `min-w-[420px]`.
-6. **Dark Mode Contrast pada Feedback Banners**:
-   - Status message banner pada 14 tool cards (`GrokBuildToolCard.js:356`, `CopilotToolCard.js:79`, dll.) menggunakan `text-green-600` dan `text-red-600` tanpa varian dark (`dark:text-green-400`, `dark:text-red-400`).
-   - Hardcoded `!bg-white !text-black` pada tombol provider di `providers/page.js:394`.
+   - `src/app/(dashboard)/dashboard/providers/ProvidersClient.js`: File mati 1.175 baris telah dihapus dari codebase.
+4. **Tailwind Theme Token Aliases (Phantom Classes Fixed)**:
+   - Menambahkan mapping alias token di `@theme inline` dalam `src/app/globals.css` (`--color-background`, `--color-text-primary`, `--color-bg-subtle`, `--color-bg-hover`, `--color-bg-secondary`, `--color-bg-tertiary`, `--color-surface-hover`, `--color-border-primary`, `--color-input`, `--color-error`) sehingga semua komponen legacy ter-style secara presisi.
+5. **Mobile Viewport Overflow (CLS & Clipping Fixed)**:
+   - `src/shared/components/Drawer.js:6-12, 57-64`: Menambahkan `max-w-full` dan lebar responsif `w-full sm:w-[...px]` pada panel drawer sehingga tidak ada clipping horizontal di layar mobile (<430px).
+   - `src/app/(dashboard)/dashboard/pxpipe/PxpipeClient.js:210`: Menambahkan `min-w-[700px]` pada tabel riwayat kompresi.
+   - `src/app/(dashboard)/dashboard/usage/components/ProviderLimits/QuotaTable.js:157`: Menambahkan `min-w-[420px]` pada tabel kuota.
+6. **Dark Mode Contrast pada Feedback Banners & Tombol**:
+   - Status message banner pada 14 tool cards (`GrokBuildToolCard.js`, `CopilotToolCard.js`, dll.) telah dilengkapi dengan `dark:text-green-400 dark:bg-green-500/20` dan `dark:text-red-400 dark:bg-red-500/20`.
+   - Menghapus hardcoded `!bg-white !text-black` pada tombol provider di `providers/page.js:394`.
 7. **Monaco Editor Theme Sync**:
-   - `src/app/(dashboard)/dashboard/translator/page.js:282`: Hardcoded `theme="vs-dark"`. Ubah menjadi dinamis mengikuti dark/light mode dashboard.
+   - `src/app/(dashboard)/dashboard/translator/page.js:282`: Menggunakan hook `useTheme()` dinamis `theme={isDark ? "vs-dark" : "light"}`.
+8. **RequestDetailsTab Filter Initialisation**:
+   - Mengeliminasi cascading render `setState in effect` dan delay 500ms dengan lazy initializer `useState(() => ...)`.
 
 ---
 
@@ -291,14 +287,14 @@ Audit independen (thermonuclear, 10 subagent) menemukan bahwa sebagian baris mat
 - **#28** helper tunggal `deriveValidateUrl()` di `open-sse/providers/schema.js` (3 call site, semantik suffix disatukan).
 - **#29** dedup Cursor precedence machineId-first, authType-aware, invariant access_token dihormati.
 - **#30** `antigravityUpstream.js`, `cloakTools` (~90L + konstanta decoy), import mati, `egress: null` — semua terhapus.
-
-Satu-satunya item yang TIDAK bisa diremediasi tanpa keputusan git: **#14** (commit upstream `5b417f9bf` belum menjadi ancestor HEAD — lihat status di matriks).
+- **#14** kiro intercept via `x-amz-target` & initial-response frame smithyDecoder selesai di-port dan teruji.
+- **Seksi 5 UI/UX & Tailwind**: gate `isExpanded` pada lifecycle card, eliminasi listener ganda `useTheme`, pembersihan `ProvidersClient.js`, alias token Tailwind di `globals.css`, anti-overflow table/drawer mobile, dark mode contrast banners, dan monaco editor theme sync.
 
 ---
 
 ## 7. Checklist Verifikasi & Quality Gate
 
-- [x] **Lint & No-Undef**: `pnpm run build` berjalan bersih tanpa error webpack / compile.
-- [x] **Unit Tests**: `pnpm test tests/unit/` lulus 100% (234 test files, 2.456 tests passed, 0 failures).
+- [x] **Lint & No-Undef**: `pnpm run build` berjalan bersih tanpa error webpack / compile (Next.js 16.2.9 Standalone Output 100% GREEN).
+- [x] **Unit Tests**: `pnpm test tests/unit/` lulus 100% (234 test files, 2.457 tests passed, 0 failures).
 - [x] **Stream & Proxy Security**: SSRF Class E terblokir, subpath relay deployer aman.
 - [x] **Zero Memory Leaks**: Semua timer unref, Map caches bounded, stream controller clean.
