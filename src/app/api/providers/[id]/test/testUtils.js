@@ -853,11 +853,21 @@ async function testApiKeyConnection(connection, effectiveProxy = null) {
         return { valid: res.ok, error: res.ok ? null : "Invalid API key" };
       }
       case "blackbox": {
-        const baseUrl = PROVIDERS["blackbox"]?.baseUrl?.replace(/\/chat\/completions$/, "") || "https://api.blackbox.ai/v1";
-        const res = await fetchWithConnectionProxy(`${baseUrl}/models`, {
-          headers: { Authorization: `Bearer ${connection.apiKey}` },
+        const baseUrl = PROVIDERS["blackbox"]?.baseUrl || "https://api.blackbox.ai/v1/chat/completions";
+        const res = await fetchWithConnectionProxy(baseUrl, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${connection.apiKey}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: "blackboxai/openai/gpt-4o",
+            messages: [{ role: "user", content: "ping" }],
+            max_tokens: 1,
+            stream: false,
+          }),
         }, effectiveProxy);
-        return { valid: res.ok, error: res.ok ? null : "Invalid API key" };
+        return { valid: res.status !== 401 && res.status !== 403, error: (res.status === 401 || res.status === 403) ? "Invalid API key" : null };
       }
       case "agentrouter": {
         const valid = await validateAgentRouterConnection(

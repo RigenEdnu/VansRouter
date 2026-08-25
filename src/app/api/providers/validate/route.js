@@ -471,20 +471,20 @@ export async function POST(request) {
         }
 
         case "blackbox": {
-          const res = await fetch("https://api.blackbox.ai/chat/completions", {
+          const res = await fetch("https://api.blackbox.ai/v1/chat/completions", {
             method: "POST",
             headers: {
               "Authorization": `Bearer ${apiKey}`,
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              model: "gpt-4o",
+              model: "blackboxai/openai/gpt-4o",
               messages: [{ role: "user", content: "test" }],
-              max_tokens: 10,
+              max_tokens: 1,
             }),
           });
-          // Returns 401 for invalid key, 200 for valid, 400 for malformed
-          isValid = res.status === 200 || res.status === 400;
+          // Returns 401/403 for invalid key, 200 for valid, 400 for malformed
+          isValid = res.status !== 401 && res.status !== 403;
           break;
         }
 

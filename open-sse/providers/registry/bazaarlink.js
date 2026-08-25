@@ -17,6 +17,7 @@ export default {
   transport: {
     baseUrl: "https://bazaarlink.ai/api/v1/chat/completions",
     validateUrl: "https://bazaarlink.ai/api/v1/models",
+    thinkingFormat: "openai",
   },
   models: [
     { id: "auto:free", name: "Auto Free (Zero Cost)" },

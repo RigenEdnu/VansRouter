@@ -93,6 +93,9 @@ export const MODEL_CAPABILITIES = {
 
   // Gemini image-gen / OpenAI image / xai image variants
   "gpt-image-1":       { imageOutput: true, tools: false },
+  "gpt-image-2":       { imageOutput: true, tools: false },
+  "flux-2-pro":        { imageOutput: true, tools: false },
+  "venice-sd35":       { imageOutput: true, tools: false },
 
   // GLM vision variant (text GLM has no vision)
   "glm-4.6v":          { vision: true, reasoning: true, thinkingFormat: "zai", contextWindow: 128000 },

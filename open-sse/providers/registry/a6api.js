@@ -17,6 +17,7 @@ export default {
   transport: {
     baseUrl: "https://a6api.com/v1/chat/completions",
     validateUrl: "https://a6api.com/v1/models",
+    thinkingFormat: "openai",
   },
   serviceKinds: ["llm", "embedding", "image"],
   embeddingConfig: {
