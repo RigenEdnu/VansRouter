@@ -76,6 +76,7 @@ describe("generated relay source", () => {
     expect(RELAY_TARGET_GUARD_SOURCE).toContain("function assertTrustedTarget(rawUrl)");
     expect(RELAY_TARGET_GUARD_SOURCE).toContain("parsed.username || parsed.password");
     expect(RELAY_TARGET_GUARD_SOURCE).toContain("Blocked URL: private IP");
+    expect(RELAY_TARGET_GUARD_SOURCE).toContain("[4026531840, 4]");
   });
 
   it("uses the SSRF guard and bounded timeout for suggested models", () => {

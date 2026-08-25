@@ -1,12 +1,19 @@
 import { NextResponse } from "next/server";
-import { getUsageStats } from "@/lib/usageDb";
+import { getUsageHistory } from "@/lib/usageDb";
 
-export async function GET() {
+export async function GET(request) {
   try {
-    const stats = await getUsageStats();
-    return NextResponse.json(stats);
+    const { searchParams } = new URL(request.url);
+    const filter = {
+      provider: searchParams.get("provider") || undefined,
+      model: searchParams.get("model") || undefined,
+      startDate: searchParams.get("startDate") || undefined,
+      endDate: searchParams.get("endDate") || undefined,
+    };
+    const history = await getUsageHistory(filter);
+    return NextResponse.json(history);
   } catch (error) {
-    console.error("Error fetching usage stats:", error);
-    return NextResponse.json({ error: "Failed to fetch usage stats" }, { status: 500 });
+    console.error("Error fetching usage history:", error);
+    return NextResponse.json({ error: "Failed to fetch usage history" }, { status: 500 });
   }
 }

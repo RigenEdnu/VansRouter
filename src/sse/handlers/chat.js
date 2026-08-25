@@ -497,6 +497,13 @@ async function handleSingleModelChat(body, modelStr, clientRawRequest = null, re
 
     if (result.success) return withSelectedConnectionHeader(result.response, credentials.connectionId); // sets X-VansRoute-Selected-Connection-Id
 
+    // Client disconnected mid-flight: exit WITHOUT locking/marking the account —
+    // the upstream failure may simply be our own abort rippling through.
+    if (clientSignal?.aborted) {
+      log.info("CHAT", `[${provider}/${model}] client disconnected — skipping account lock/fallback`);
+      return withSelectedConnectionHeader(new Response(null, { status: 499 }), credentials.connectionId);
+    }
+
     // STREAM_EARLY_EOF: flaky upstream sent HTTP 200 then closed the SSE before
     // any useful content frame. Transient upstream glitch — retry once on the
     // SAME connection without marking it unavailable. The finally block above

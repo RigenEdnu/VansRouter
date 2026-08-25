@@ -71,7 +71,7 @@ export async function handleFetch(request) {
     return errorResponse(HTTP_STATUS.BAD_REQUEST, "Missing required field: provider (or model)");
   }
 
-  if (!isKindAllowed(apiKeyInfo, "web")) {
+  if (!isKindAllowed(apiKeyInfo, "webFetch")) {
     log.warn("AUTH", "Web fetch kind not allowed for API key");
     return errorResponse(HTTP_STATUS.FORBIDDEN, "Web fetch requests are not allowed for this API key");
   }

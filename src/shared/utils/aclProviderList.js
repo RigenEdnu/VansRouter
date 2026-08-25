@@ -47,6 +47,7 @@ export function buildProviderList(connections, nodes, registered = []) {
       displayName = node.name || id;
       prefix = node.prefix || null;
     }
-    return { id, displayName, prefix, alias, count };
+    const serviceKinds = rp?.serviceKinds || ["llm"];
+    return { id, displayName, prefix, alias, count, serviceKinds };
   }).sort((a, b) => a.displayName.localeCompare(b.displayName));
 }

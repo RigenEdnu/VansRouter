@@ -22,6 +22,7 @@ import { buildClineHeaders } from "@/shared/utils/clineAuth";
 import { validateAgentRouterConnection } from "open-sse/executors/agentrouter.js";
 import { getKimchiUserAgent } from "open-sse/utils/kimchiUserAgent.js";
 import { assertValidKiroRegion } from "open-sse/config/awsRegion.js";
+import { deriveValidateUrl } from "open-sse/providers/schema.js";
 
 // OAuth provider test endpoints
 const OAUTH_TEST_CONFIG = {
@@ -865,8 +866,21 @@ async function testApiKeyConnection(connection, effectiveProxy = null) {
         );
         return { valid, error: valid ? null : "Invalid API key" };
       }
-      default:
+      default: {
+        // Generic probe using validateUrl or baseUrl from registry
+        const cfg = PROVIDERS[connection.provider];
+        const probeUrl = deriveValidateUrl(cfg);
+        if (probeUrl && connection.apiKey) {
+          // Mirror executors/default.js setAuth: bearer scheme → "Bearer <key>", else raw key.
+          const authHeader = cfg?.auth?.header || "Authorization";
+          const authScheme = (!cfg?.auth || cfg.auth.scheme === "bearer") ? "Bearer " : "";
+          const res = await fetchWithConnectionProxy(probeUrl, {
+            headers: { [authHeader]: `${authScheme}${connection.apiKey}` },
+          }, effectiveProxy);
+          return { valid: res.ok, error: res.ok ? null : "Invalid API key" };
+        }
         return { valid: false, error: "Provider test not supported" };
+      }
     }
   } catch (err) {
     return { valid: false, error: err.message };

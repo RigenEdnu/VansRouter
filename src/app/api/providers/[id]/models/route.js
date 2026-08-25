@@ -4,7 +4,8 @@ import { isOpenAICompatibleProvider, isAnthropicCompatibleProvider } from "@/sha
 import { GEMINI_CONFIG } from "@/lib/oauth/constants/oauth";
 import { refreshGoogleToken, refreshCodexToken, updateProviderCredentials } from "@/sse/services/tokenRefresh";
 import { resolveOllamaLocalHost, getStaticProviderModels } from "open-sse/config/providers.js";
-import { PROVIDER_OAUTH } from "open-sse/providers/index.js";
+import { PROVIDERS, PROVIDER_OAUTH } from "open-sse/providers/index.js";
+import { deriveValidateUrl } from "open-sse/providers/schema.js";
 import { resolveKiroModels } from "open-sse/services/kiroModels.js";
 import { resolveQoderModels } from "open-sse/services/qoderModels.js";
 import { resolveGrokCliModels } from "open-sse/services/grokCliModels.js";
@@ -67,12 +68,13 @@ const appendCodexReviewModels = (models) => models.flatMap((model) => {
 
 const parseCodexModels = (data) => appendCodexReviewModels(parseOpenAIStyleModels(data));
 
-const createOpenAIModelsConfig = (url) => ({
+const createOpenAIModelsConfig = (url, regCfg = null) => ({
   url,
   method: "GET",
   headers: { "Content-Type": "application/json" },
-  authHeader: "Authorization",
-  authPrefix: "Bearer ",
+  // Mirror executors/default.js setAuth: registry auth block wins, Bearer default.
+  authHeader: regCfg?.auth?.header || "Authorization",
+  authPrefix: (!regCfg?.auth || regCfg.auth.scheme === "bearer") ? "Bearer " : "",
   parseResponse: parseOpenAIStyleModels
 });
 
@@ -282,7 +284,7 @@ const PROVIDER_MODELS_CONFIG = {
       const result = await resolveCursorModels({
         accessToken: connection.accessToken,
         providerSpecificData: connection.providerSpecificData || {},
-      }, { forceRefresh: true, log: console });
+      }, { log: console });
       if (result?.models?.length) return { models: result.models };
       return {
         models: getStaticProviderModels("cursor"),
@@ -348,7 +350,7 @@ const PROVIDER_MODELS_CONFIG = {
       };
       let warning;
       try {
-        const result = await resolveQoderModels(credentials, { forceRefresh: true });
+        const result = await resolveQoderModels(credentials);
         if (result?.models?.length) {
           return {
             models: result.models.map((m) => ({
@@ -526,7 +528,14 @@ export async function GET(request, { params }) {
       });
     }
 
-    const config = PROVIDER_MODELS_CONFIG[connection.provider];
+    let config = PROVIDER_MODELS_CONFIG[connection.provider];
+    if (!config) {
+      const regCfg = PROVIDERS[connection.provider];
+      const validateUrl = deriveValidateUrl(regCfg);
+      if (validateUrl && connection.apiKey) {
+        config = createOpenAIModelsConfig(validateUrl, regCfg);
+      }
+    }
     if (!config) {
       return NextResponse.json(
         { error: `Provider ${connection.provider} does not support models listing` },

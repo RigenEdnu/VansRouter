@@ -41,7 +41,8 @@ export function useCircuitBreakers() {
   }, []);
 
   const getCircuitBreakerForProvider = (providerId) => {
-    return statuses.find(s => s.name === providerId);
+    if (!providerId) return undefined;
+    return statuses.find(s => s.name === providerId || s.name.startsWith(`${providerId}:`));
   };
 
   const resetCircuitBreaker = async (name) => {

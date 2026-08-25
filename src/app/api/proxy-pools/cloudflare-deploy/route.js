@@ -20,7 +20,9 @@ export default {
 
     let targetUrl;
     try {
-      targetUrl = new URL(relayPath, target.replace(/\\/$/, "")).toString();
+      const base = target.replace(/\\/+$/, "");
+      const path = relayPath.startsWith("/") ? relayPath : "/" + relayPath;
+      targetUrl = base + path;
       assertTrustedTarget(targetUrl);
     } catch (error) {
       return new Response(JSON.stringify({ error: error.message }), { status: 400, headers: { "content-type": "application/json" } });

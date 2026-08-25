@@ -22,7 +22,7 @@ function ipv4ToInt(host) {
 const BLOCKED_V4_RANGES = [
   [0, 8], [ipv4ToInt("10.0.0.0"), 8], [ipv4ToInt("127.0.0.0"), 8],
   [ipv4ToInt("169.254.0.0"), 16], [ipv4ToInt("172.16.0.0"), 12],
-  [ipv4ToInt("192.168.0.0"), 16], [ipv4ToInt("100.64.0.0"), 10], [ipv4ToInt("224.0.0.0"), 4],
+  [ipv4ToInt("192.168.0.0"), 16], [ipv4ToInt("100.64.0.0"), 10], [ipv4ToInt("224.0.0.0"), 4], [ipv4ToInt("240.0.0.0"), 4],
 ];
 
 function isBlockedIpv4(host) {
@@ -97,7 +97,7 @@ export const RELAY_TARGET_GUARD_SOURCE = `function assertTrustedTarget(rawUrl) {
   const ipv4 = host.split(".");
   if (ipv4.length === 4 && ipv4.every((part) => /^\\d{1,3}$/.test(part) && Number(part) <= 255)) {
     const ip = ipv4.reduce((value, part) => value * 256 + Number(part), 0) >>> 0;
-    const blocked = [[0, 8], [167772160, 8], [2130706432, 8], [2851995648, 16], [2852039168, 12], [2886729728, 12], [3232235520, 16], [1681915904, 10], [3758096384, 4]];
+    const blocked = [[0, 8], [167772160, 8], [2130706432, 8], [2851995648, 16], [2852039168, 12], [2886729728, 12], [3232235520, 16], [1681915904, 10], [3758096384, 4], [4026531840, 4]];
     if (blocked.some(([base, bits]) => (ip & ((0xffffffff << (32 - bits)) >>> 0)) === (base & ((0xffffffff << (32 - bits)) >>> 0)))) {
       throw new Error("Blocked URL: private IP");
     }

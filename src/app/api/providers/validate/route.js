@@ -10,6 +10,7 @@ import { normalizeProviderId } from "@/lib/providerNormalization";
 import { cleanCookie } from "open-sse/utils/cookie.js";
 import { validateMuseSparkConnection } from "open-sse/executors/muse-spark-web.js";
 import { validateAgentRouterConnection } from "open-sse/executors/agentrouter.js";
+import { deriveValidateUrl } from "open-sse/providers/schema.js";
 
 // Probe a webSearch/webFetch provider using its searchConfig/fetchConfig.
 // Returns true if API key is accepted (status !== 401 && !== 403).
@@ -632,10 +633,14 @@ export async function POST(request) {
           }
           // Build auth headers based on registry metadata (default: bearer).
           const headers = { "Content-Type": "application/json", ...(cfg.headers || {}) };
-          if (cfg.authHeader === "x-api-key") headers["X-API-Key"] = apiKey;
-          else headers["Authorization"] = `Bearer ${apiKey}`;
+          // Mirror executors/default.js setAuth: registry auth block wins, Bearer default.
+          if (cfg.auth?.header) {
+            headers[cfg.auth.header] = cfg.auth.scheme === "bearer" ? `Bearer ${apiKey}` : apiKey;
+          } else {
+            headers["Authorization"] = `Bearer ${apiKey}`;
+          }
           // Prefer an explicit registry validation URL; derive the common path otherwise.
-          const modelsUrl = cfg.validateUrl || cfg.baseUrl.replace(/\/chat\/completions$/, "/models").replace(/\/chatbot$/, "/models");
+          const modelsUrl = deriveValidateUrl(cfg);
           let probeOk = null;
           try {
             const probeRes = await fetch(modelsUrl, { headers, signal: AbortSignal.timeout(8000) });

@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { createProxyPool, getProviderConnections, getProxyPools } from "@/models";
-import { getPoolGeo } from "open-sse/services/poolGeo.js";
 import { requireDashboardAuth } from "@/lib/auth/routeAuth.js";
 
 async function authorized(request) {
@@ -76,7 +75,6 @@ export async function GET(request) {
     const enrichedProxyPools = proxyPools.map((pool) => ({
       ...pool,
       boundConnectionCount: usageMap.get(pool.id) || 0,
-      egress: getPoolGeo(pool.id) || null,
     }));
 
     return NextResponse.json({ proxyPools: enrichedProxyPools });
