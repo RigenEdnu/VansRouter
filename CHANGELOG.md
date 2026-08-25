@@ -1,3 +1,13 @@
+# v0.91.11 (2026-08-25)
+
+- **Grok 4.6 full capability & effort scaling** — Added first-class support for `grok-4.6` with regex effort matching (`/^grok-4\.[56](?:$|-)/`), 500k context window registration in provider capabilities, and virtual reasoning effort aliases (`xhigh`, `high`, `medium`, `low`).
+- **Grok CLI subscription tier fallback order** — Prioritized authoritative subscription tier data returned by the `/v1/user` billing endpoint, with fallback to JWT token claims.
+- **SSE streaming & buffer bypass** — Bypassed 8KB buffer peeking during active stream mode to achieve 0ms time-to-first-token (TTFT) and deterministic Claude billing cache headers.
+- **Provider connection probe hardening** — Hardened the Blackbox connection test probe to evaluate `res.ok || res.status === 400` against canonical registry models, eliminating false-positive active status flags on region blocks.
+- **Thinking format compatibility** — Registered `thinkingFormat: "openai"` for Bazaarlink and A6API providers to guarantee correct reasoning block delivery.
+- **Frontend performance & accessibility** — Removed redundant external Google Font CDN stylesheet link to eliminate 1.2s+ render-blocking FCP delay, memoized O(N²) provider stats calculations during interval polling, optimized image loading with deferred preloading, fixed landing page contrast ratios, and removed dead SSR machine ID extraction.
+- **OAuth & Upstream sync** — Added CodeBuddy-Intl OAuth support, Cursor machine ID deduplication precedence, and Codestral transport quirks.
+
 # v0.91.10 (2026-08-19)
 
 - **OpenAI Responses system prompt injection** — Injected Token Saver prompts (Caveman/Ponytail) into `body.instructions` instead of `input[]` for OpenAI Responses / Codex models, preventing `Unknown parameter: 'input[0].content'` (#106 / #2497).
