@@ -38,7 +38,7 @@ function escapeXml(str) {
 async function ttsRequest(text, voiceId, token) {
   const parts = voiceId.split("-");
   const xmlLang = parts.slice(0, 2).join("-");
-  const gender = voiceId.toLowerCase().includes("male") ? "Male" : "Female";
+  const gender = /(?:^|-)male/i.test(voiceId) ? "Male" : "Female";
   const safeText = escapeXml(text);
   const ssml = `<speak version='1.0' xml:lang='${escapeXml(xmlLang)}'><voice xml:lang='${escapeXml(xmlLang)}' xml:gender='${escapeXml(gender)}' name='${escapeXml(voiceId)}'><prosody rate='0.00%'>${safeText}</prosody></voice></speak>`;
   const body = new URLSearchParams();

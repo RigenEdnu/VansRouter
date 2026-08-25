@@ -87,6 +87,24 @@ function resolvePlan(user, config) {
   return "Grok Build";
 }
 
+// Display only; upstream remains authoritative for access and quota enforcement.
+function planFromAccessToken(accessToken) {
+  try {
+    const payload = JSON.parse(Buffer.from(accessToken.split(".")[1], "base64url"));
+    return {
+      0: "Free",
+      1: "SuperGrok",
+      2: "X Basic",
+      3: "X Premium",
+      4: "X Premium Plus",
+      5: "SuperGrok Heavy",
+      6: "SuperGrok Lite",
+    }[payload.tier] || "";
+  } catch {
+    return "";
+  }
+}
+
 function makeQuota({ used, total, resetAt, unlimited = false }) {
   const safeTotal = Math.max(0, toFiniteNumber(total, 0));
   const safeUsed = Math.max(0, toFiniteNumber(used, 0));
@@ -356,6 +374,7 @@ export async function getGrokCliUsage(accessToken, providerSpecificData = null, 
     }
 
     const parsed = parseGrokCliBilling(billing, user);
+    parsed.plan = planFromAccessToken(accessToken) || parsed.plan;
 
     if (!parsed.quotas || Object.keys(parsed.quotas).length === 0) {
       const grpcQuotas = quotasFromGrpcCredits(
