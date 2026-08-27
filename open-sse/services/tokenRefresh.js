@@ -137,7 +137,7 @@ const REFRESH_HANDLERS = {
   // Grok CLI shares xAI OAuth client + token endpoint (device-code tokens refresh the same way)
   "grok-cli": (c, log) => refreshXaiToken(c.refreshToken, log),
   gcli: (c, log) => refreshXaiToken(c.refreshToken, log),
-  "codebuddy-cn": (c, log) => refreshCodebuddyToken(c.refreshToken, log),
+  "codebuddy-cn": (c, log) => refreshCodebuddyToken(c.refreshToken, log, "codebuddy-cn"),
   "codebuddy-intl": (c, log) => refreshCodebuddyToken(c.refreshToken, log, "codebuddy-intl"),
   gitlab: (c, log) => refreshAccessToken("gitlab", c.refreshToken, c, log),
   // Kimi Code OAuth (merged into id `kimi`); legacy id still routes here
