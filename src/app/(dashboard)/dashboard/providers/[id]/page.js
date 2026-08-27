@@ -75,6 +75,7 @@ export default function ProviderDetailPage() {
   const [kiloFreeModels, setKiloFreeModels] = useState([]);
   const [disabledModelIds, setDisabledModelIds] = useState([]);
   const [confirmState, setConfirmState] = useState(null);
+  const [noticeState, setNoticeState] = useState(null);
   const [showAgRiskModal, setShowAgRiskModal] = useState(false);
   const [oneByOneRunning, setOneByOneRunning] = useState(false);
   const [oneByOneStopping, setOneByOneStopping] = useState(false);
@@ -82,7 +83,7 @@ export default function ProviderDetailPage() {
   const [oneByOneResults, setOneByOneResults] = useState({});
   const [oneByOneSummary, setOneByOneSummary] = useState(null);
   const stopOneByOneRef = useRef(false);
-  const [importingQoderModels, setImportingQoderModels] = useState(false);
+  const [importingModels, setImportingModels] = useState(false);
   const { copied, copy } = useCopyToClipboard();
 
   const AG_RISK_STORAGE_KEY = "ag_risk_confirmed";
@@ -152,7 +153,7 @@ export default function ProviderDetailPage() {
     ? liveModels
     : staticModels;
   const providerAlias = getProviderAlias(providerId);
-  
+
   const isOpenAICompatible = isOpenAICompatibleProvider(providerId);
   const isAnthropicCompatible = isAnthropicCompatibleProvider(providerId);
   const isCompatible = isOpenAICompatible || isAnthropicCompatible;
@@ -564,7 +565,7 @@ export default function ProviderDetailPage() {
         await fetchAliases();
       } else {
         const data = await res.json();
-        alert(data.error || "Failed to set alias");
+        setNoticeState({ title: translate("Error"), message: data.error || "Failed to set alias", variant: "error" });
       }
     } catch (error) {
       console.log("Error setting alias:", error);
@@ -596,7 +597,7 @@ export default function ProviderDetailPage() {
         if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent("customModelChanged"));
       } else {
         const data = await res.json();
-        alert(data.error || "Failed to add custom model");
+        setNoticeState({ title: translate("Error"), message: data.error || "Failed to add custom model", variant: "error" });
       }
     } catch (error) {
       console.log("Error adding custom model:", error);
@@ -616,57 +617,93 @@ export default function ProviderDetailPage() {
     }
   };
 
-  // Fetch Qoder model list and automatically add to available models
-  const handleImportQoderModels = async () => {
-    if (importingQoderModels) return;
+  /**
+   * Fetch the provider's live models and import the ones not yet available.
+   * Uses the active connection's /models catalog when present (OAuth / API key /
+   * compatible nodes all resolved server-side), otherwise falls back to the
+   * provider's public modelsFetcher (free / no-auth providers).
+   */
+  const handleImportProviderModels = async () => {
+    if (importingModels) return;
     const activeConnection = connections.find((conn) => conn.isActive !== false);
-    if (!activeConnection) {
-      alert(translate("Please add an active Qoder connection first"));
-      return;
-    }
 
-    setImportingQoderModels(true);
+    setImportingModels(true);
     try {
-      const res = await fetch(`/api/providers/${activeConnection.id}/models`);
-      const data = await res.json();
-      if (!res.ok) {
-        alert(data.error || translate("Failed to fetch models"));
+      let fetchedModels = [];
+      if (activeConnection) {
+        const res = await fetch(`/api/providers/${activeConnection.id}/models`);
+        const data = await res.json();
+        if (!res.ok) {
+          setNoticeState({ title: translate("Error"), message: data.error || translate("Failed to fetch models"), variant: "error" });
+          return;
+        }
+        fetchedModels = data.models || [];
+      } else {
+        const fetcher = (OAUTH_PROVIDERS[providerId] || APIKEY_PROVIDERS[providerId] || FREE_PROVIDERS[providerId] || FREE_TIER_PROVIDERS[providerId])?.modelsFetcher;
+        if (!fetcher) {
+          setNoticeState({ title: translate("Notice"), message: translate("Please add an active connection first"), variant: "info" });
+          return;
+        }
+        fetchedModels = await fetchSuggestedModels(fetcher);
+      }
+
+      const validModels = fetchedModels.filter((m) => m?.id || m?.name || m?.model);
+      if (validModels.length === 0) {
+        setNoticeState({ title: translate("Notice"), message: translate("No models returned"), variant: "info" });
         return;
       }
-      const models = data.models || [];
-      if (models.length === 0) {
-        alert(translate("No models returned"));
-        return;
+
+      // Some resolvers return ids prefixed with the provider (e.g. "qoder/auto"); store them bare.
+      const prefixPattern = new RegExp(`^(?:${providerId}|${providerStorageAlias})/`);
+      // Skip obvious non-chat ids (embeddings, tts, image gen, moderation...) so
+      // importing from a raw /models catalog doesn't pollute the model list.
+      const nonLlmIdPattern = /embed|whisper|dall-e|dalle|imagen|moderation|rerank|tts/i;
+
+      const existingIds = new Set([
+        ...models.map((m) => m.id),
+        ...kiloFreeModels.map((m) => m.id),
+        ...customModels
+          .filter((entry) => entry.providerAlias === providerStorageAlias && (entry.kind || entry.type || "llm") === "llm")
+          .map((entry) => entry.id),
+      ]);
+      for (const fullModel of Object.values(modelAliases)) {
+        if (typeof fullModel !== "string") continue;
+        if (fullModel.startsWith(`${providerStorageAlias}/`)) {
+          existingIds.add(fullModel.slice(providerStorageAlias.length + 1));
+        } else if (fullModel.startsWith(`${providerId}/`)) {
+          existingIds.add(fullModel.slice(providerId.length + 1));
+        }
       }
 
       let importedCount = 0;
-      for (const model of models) {
-        const modelId = model.id || model.name;
-        if (!modelId) continue;
-        
-        // Qoder model ID format may be "qoder/auto" or "auto", need to remove prefix
-        const cleanModelId = modelId.replace(/^qoder\//, "");
-        const alreadyExists = customModels.some(
-          (entry) => entry.providerAlias === providerStorageAlias && entry.id === cleanModelId && (entry.kind || entry.type || "llm") === "llm"
-        ) || Object.values(modelAliases).includes(`${providerStorageAlias}/${cleanModelId}`);
-        if (alreadyExists) {
-          continue;
-        }
+      for (const model of validModels) {
+        const rawId = model.id || model.name || model.model;
+        const kind = getModelKind(model);
+        if (kind && kind !== "llm") continue;
+        if (nonLlmIdPattern.test(rawId)) continue;
 
-        await handleAddCustomModel(cleanModelId, "llm", providerStorageAlias);
+        const modelId = rawId.replace(prefixPattern, "");
+        if (!modelId || existingIds.has(modelId)) continue;
+
+        await handleAddCustomModel(modelId, "llm", providerStorageAlias);
+        existingIds.add(modelId);
         importedCount += 1;
       }
-      
+
       if (importedCount === 0) {
-        alert(translate("All models already exist, no new models added"));
+        setNoticeState({ title: translate("Notice"), message: translate("All models already exist, no new models added"), variant: "info" });
       } else {
-        alert(translate("Successfully added") + ` ${importedCount} ` + translate("models"));
+        setNoticeState({
+          title: translate("Success"),
+          message: translate("Successfully added") + ` ${importedCount} ` + translate("models"),
+          variant: "success",
+        });
       }
     } catch (error) {
-      console.log("Error importing Qoder models:", error);
-      alert(translate("Error fetching models") + ": " + error.message);
+      console.log("Error importing provider models:", error);
+      setNoticeState({ title: translate("Error"), message: translate("Error fetching models") + ": " + error.message, variant: "error" });
     } finally {
-      setImportingQoderModels(false);
+      setImportingModels(false);
     }
   };
 
@@ -801,7 +838,7 @@ export default function ProviderDetailPage() {
         }
         setConnections(prev => prev.filter(c => !idsToDelete.includes(c.id)));
         setSelectedConnectionIds([]);
-        if (failed > 0) alert(`Deleted ${idsToDelete.length - failed} connection(s), ${failed} failed.`);
+        if (failed > 0) setNoticeState({ title: translate("Error"), message: `Deleted ${idsToDelete.length - failed} connection(s), ${failed} failed.`, variant: "error" });
       }
     });
   };
@@ -988,7 +1025,7 @@ export default function ProviderDetailPage() {
       }
       await fetchConnections();
       if (failedConnectionIds.length > 0) {
-        alert(`Updated with ${failedConnectionIds.length} failed request(s). Retry the selected connections.`);
+        setNoticeState({ title: translate("Error"), message: `Updated with ${failedConnectionIds.length} failed request(s). Retry the selected connections.`, variant: "error" });
         return;
       }
       setShowBulkProxyModal(false);
@@ -1009,7 +1046,7 @@ export default function ProviderDetailPage() {
   const handleApplyOneToOne = () => {
     const activePools = proxyPools.filter((p) => p.isActive === true);
     if (activePools.length === 0) {
-      alert("No active proxy pools available.");
+      setNoticeState({ title: translate("Notice"), message: "No active proxy pools available.", variant: "info" });
       return;
     }
     const targets = (selectedConnectionIds.length > 0 ? selectedConnections : connections).map((c, i) => ({
@@ -1022,7 +1059,7 @@ export default function ProviderDetailPage() {
   const handleApplyAdvancedProxy = (strategy, ids) => {
     const activeIds = ids.filter((id) => proxyPools.find(p => p.id === id)?.isActive === true);
     if (!activeIds.length) {
-      alert("No active proxy pools selected.");
+      setNoticeState({ title: translate("Notice"), message: "No active proxy pools selected.", variant: "info" });
       return;
     }
     const targets = (selectedConnectionIds.length > 0 ? selectedConnections : connections).map((c) => ({
@@ -1335,20 +1372,6 @@ export default function ProviderDetailPage() {
           <span className="material-symbols-outlined text-sm">add</span>
           Add Model
         </button>
-
-        {/* Import Qoder models button — only show for qoder provider */}
-        {providerId === "qoder" && connections.some((conn) => conn.isActive !== false) && (
-          <button
-            onClick={handleImportQoderModels}
-            disabled={importingQoderModels}
-            className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-blue-500/40 px-3 py-2 text-xs text-blue-600 dark:text-blue-400 transition-colors hover:border-blue-500 hover:bg-blue-500/5 sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <span className="material-symbols-outlined text-sm" style={importingQoderModels ? { animation: "spin 1s linear infinite" } : undefined}>
-              {importingQoderModels ? "progress_activity" : "download"}
-            </span>
-            {importingQoderModels ? translate("Fetching...") : translate("Fetch Qoder Models")}
-          </button>
-        )}
 
         {/* Suggested models from provider API — show only models not yet added */}
         {suggestedModels.length > 0 && (() => {
@@ -1811,6 +1834,17 @@ export default function ProviderDetailPage() {
                 ))}
               </select>
             )}
+            {!isCompatible && (
+              <Button
+                size="sm"
+                variant="secondary"
+                icon="download"
+                loading={importingModels}
+                onClick={handleImportProviderModels}
+              >
+                {translate("Import models")}
+              </Button>
+            )}
           </div>
           {!isCompatible && (() => {
             const allIds = [
@@ -1956,6 +1990,34 @@ export default function ProviderDetailPage() {
         message={confirmState?.message}
         variant="danger"
       />
+
+      {/* Notice Modal — informational success/error/info messages */}
+      <Modal
+        isOpen={!!noticeState}
+        onClose={() => setNoticeState(null)}
+        title={noticeState?.title || "Notice"}
+        size="sm"
+        footer={
+          <>
+            <Button variant={noticeState?.variant === "success" ? "success" : noticeState?.variant === "error" ? "danger" : "primary"} onClick={() => setNoticeState(null)}>
+              OK
+            </Button>
+          </>
+        }
+      >
+        <div className="flex items-start gap-3">
+          {noticeState?.variant === "success" && (
+            <span className="material-symbols-outlined text-[20px] text-green-500 mt-0.5 shrink-0">check_circle</span>
+          )}
+          {noticeState?.variant === "error" && (
+            <span className="material-symbols-outlined text-[20px] text-red-500 mt-0.5 shrink-0">error</span>
+          )}
+          {noticeState?.variant === "info" && (
+            <span className="material-symbols-outlined text-[20px] text-blue-500 mt-0.5 shrink-0">info</span>
+          )}
+          <p className="text-sm text-text-muted leading-relaxed break-words">{noticeState?.message}</p>
+        </div>
+      </Modal>
     </div>
   );
 }
