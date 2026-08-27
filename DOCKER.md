@@ -1,7 +1,7 @@
 # Docker
 
 Run VansRouter in a container. Published images:
-- GHCR: [`ghcr.io/Vanszs/VansRouter`](https://github.com/Vanszs/VansRouter/pkgs/container/VansRouter)
+- GHCR: [`ghcr.io/vanszs/vansrouter`](https://github.com/Vanszs/VansRouter/pkgs/container/VansRouter)
 - Docker Hub: [`vanszs/vansrouter`](https://hub.docker.com/r/vanszs/vansrouter)
 
 Multi-platform `linux/amd64` + `linux/arm64`.
@@ -18,7 +18,7 @@ docker run -d \
   -v "$HOME/.9router:/app/data" \
   -e DATA_DIR=/app/data \
   --name vansrouter \
-  ghcr.io/Vanszs/VansRouter:latest
+  ghcr.io/vanszs/vansrouter:latest
 ```
 
 App listens on port `20128`. Open: http://localhost:20128
@@ -71,7 +71,7 @@ docker run -d \
   -e HOSTNAME=0.0.0.0 \
   -e DEBUG=true \
   --name vansrouter \
-  ghcr.io/Vanszs/VansRouter:latest
+  ghcr.io/vanszs/vansrouter:latest
 ```
 
 ## Optional Headroom sidecar
@@ -98,7 +98,7 @@ Create your own `docker-compose.yml`:
 ```yaml
 services:
   vansrouter:
-    image: ghcr.io/Vanszs/VansRouter:latest
+    image: ghcr.io/vanszs/vansrouter:latest
     container_name: vansrouter
     restart: always
     ports:
@@ -139,7 +139,7 @@ If Headroom runs on the Docker host instead of as a sidecar, use `http://host.do
 ## Update to latest
 
 ```bash
-docker pull ghcr.io/Vanszs/VansRouter:latest
+docker pull ghcr.io/vanszs/vansrouter:latest
 docker rm -f vansrouter
 # re-run the quick start command
 ```
@@ -162,7 +162,7 @@ docker run --rm -p 20128:20128 \
 ## Publish (automatic via CI)
 
 Push a git tag `v*` → GitHub Actions builds multi-platform (amd64+arm64) and pushes to:
-- `ghcr.io/Vanszs/VansRouter:v{version}` + `:latest`
+- `ghcr.io/vanszs/vansrouter:v{version}` + `:latest`
 - `vanszs/vansrouter:v{version}` + `:latest`
 
 ```bash
