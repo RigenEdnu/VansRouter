@@ -1,7 +1,7 @@
 import crypto from "crypto";
 import { BaseExecutor } from "./base.js";
 import { PROVIDERS } from "../config/providers.js";
-import { OAUTH_ENDPOINTS, ANTIGRAVITY_HEADERS } from "../config/appConstants.js";
+import { OAUTH_ENDPOINTS, ANTIGRAVITY_HEADERS, ANTIGRAVITY_PROMPT_REWRITES } from "../config/appConstants.js";
 import { HTTP_STATUS } from "../config/runtimeConfig.js";
 import { resolveSessionId } from "../utils/sessionManager.js";
 import { proxyAwareFetch } from "../utils/proxyFetch.js";
@@ -278,14 +278,21 @@ export class AntigravityExecutor extends BaseExecutor {
       }
     }
     stripBlacklisted(requestWithoutTools);
+
+    // Rewrite competing-client branding in system prompts (e.g. Zed's Claude prompt,
+    // OpenCode naming) so Antigravity doesn't flag the request with a 429 Quota Exhausted.
     if (Array.isArray(requestWithoutTools.systemInstruction?.parts)) {
       requestWithoutTools.systemInstruction = {
         ...requestWithoutTools.systemInstruction,
-        parts: requestWithoutTools.systemInstruction.parts.map((part) => (
-          typeof part?.text === "string"
-            ? { ...part, text: AG_PROMPT_TRIGGERS.reduce((text, trigger) => text.split(trigger).join(""), part.text) }
-            : part
-        )),
+        parts: requestWithoutTools.systemInstruction.parts.map((part) => {
+          if (typeof part?.text !== "string") return part;
+          let text = part.text;
+          for (const { from, to } of ANTIGRAVITY_PROMPT_REWRITES) {
+            text = text.replaceAll(from, to);
+          }
+          text = AG_PROMPT_TRIGGERS.reduce((t, trigger) => t.split(trigger).join(""), text);
+          return { ...part, text };
+        }),
       };
     }
     // Model-aware thinkingConfig strip — keep for Gemini, drop for Claude/gpt-oss/tab_.
