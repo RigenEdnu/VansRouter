@@ -16,11 +16,11 @@ import { getKimiUsage } from "./usage/kimi.js";
 import { getDeepseekUsage } from "./usage/deepseek.js";
 import { resolveQoderCredentials } from "./qoderModels.js";
 import getFreebuffUsage from "./usage/freebuff.js";
+import { getGlmUsage } from "./usage/glm.js";
 import {
   getQwenUsage,
   getIflowUsage,
   getOllamaUsage,
-  getGlmUsage,
   getVercelAiGatewayUsage,
   getQoderUsage,
 } from "./usage/misc.js";
