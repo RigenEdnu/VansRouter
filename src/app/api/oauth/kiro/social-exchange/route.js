@@ -1,56 +1,108 @@
 import { NextResponse } from "next/server";
 import { KiroService } from "@/lib/oauth/services/kiro";
-import { createProviderConnection } from "@/models";
+import {
+  createProviderConnection,
+  getProviderConnections,
+  updateProviderConnection,
+} from "@/models";
+import { KIRO_CONFIG } from "@/lib/oauth/constants/oauth";
+import { findKiroConnectionByIdentity } from "@/lib/oauth/kiroConnectionIdentity";
+import { classifyKiroSocialPoll } from "@/lib/oauth/kiroSocialPoll";
 
 /**
  * POST /api/oauth/kiro/social-exchange
- * Exchange authorization code for tokens (Google/GitHub social login)
- * Callback URL will be in format: kiro://kiro.kiroAgent/authenticate-success?code=XXX&state=YYY
+ * Poll device code for tokens (Google/GitHub social login device flow).
+ * Frontend calls this repeatedly until authorization completes.
  */
 export async function POST(request) {
+  let body;
   try {
-    const { code, codeVerifier, provider } = await request.json();
+    body = await request.json();
+  } catch {
+    return NextResponse.json(
+      {
+        error: "Invalid JSON body",
+      },
+      { status: 400 }
+    );
+  }
 
-    if (!code || !codeVerifier) {
-      return NextResponse.json(
-        { error: "Missing required fields" },
-        { status: 400 }
-      );
+  const { deviceCode, provider, targetProvider } = body || {};
+
+  if (!deviceCode || !provider || !["google", "github"].includes(provider)) {
+    return NextResponse.json(
+      { error: "Missing or invalid deviceCode or provider" },
+      { status: 400 }
+    );
+  }
+
+  try {
+    const response = await fetch(KIRO_CONFIG.socialDevicePollUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ deviceCode, clientId: KIRO_CONFIG.socialClientId }),
+    });
+
+    const data = await response.json();
+    const poll = classifyKiroSocialPoll(response.ok, response.status, data);
+
+    if (poll.kind === "pending") {
+      return NextResponse.json({
+        success: false,
+        pending: true,
+        error: poll.error,
+      });
     }
 
-    if (!provider || !["google", "github"].includes(provider)) {
+    if (poll.kind === "error") {
       return NextResponse.json(
-        { error: "Invalid provider" },
-        { status: 400 }
+        {
+          success: false,
+          pending: false,
+          error: poll.error,
+        },
+        { status: poll.status }
       );
     }
 
     const kiroService = new KiroService();
+    const email = kiroService.extractEmailFromJWT(data.accessToken);
 
-    // Exchange code for tokens (redirect_uri handled internally)
-    const tokenData = await kiroService.exchangeSocialCode(
-      code,
-      codeVerifier
-    );
+    const providerSpecificData = {
+      authMethod: "imported",
+      provider: provider.charAt(0).toUpperCase() + provider.slice(1),
+    };
 
-    // Extract email from JWT if available
-    const email = kiroService.extractEmailFromJWT(tokenData.accessToken);
+    if (data.profileArn) {
+      providerSpecificData.profileArn = data.profileArn;
+    }
 
-    // Save to database
-    const connection = await createProviderConnection({
-      provider: "kiro",
-      authType: "oauth",
-      accessToken: tokenData.accessToken,
-      refreshToken: tokenData.refreshToken,
-      expiresAt: new Date(Date.now() + tokenData.expiresIn * 1000).toISOString(),
+    const resolvedProvider = targetProvider || "kiro";
+    const record = {
+      accessToken: data.accessToken,
+      refreshToken: data.refreshToken,
+      expiresAt: new Date(Date.now() + (data.expiresIn || 3600) * 1000).toISOString(),
       email: email || null,
-      providerSpecificData: {
-        profileArn: tokenData.profileArn,
-        authMethod: provider, // "google" or "github"
-        provider: provider.charAt(0).toUpperCase() + provider.slice(1),
-      },
+      providerSpecificData,
       testStatus: "active",
+      isActive: true,
+    };
+
+    const existing = await getProviderConnections({ provider: resolvedProvider });
+    const match = findKiroConnectionByIdentity(existing, {
+      authType: "oauth",
+      profileArn: data.profileArn,
+      email,
     });
+
+    const connection =
+      typeof match?.id === "string" || typeof match?.id === "number"
+        ? await updateProviderConnection(match.id, record)
+        : await createProviderConnection({
+            provider: resolvedProvider,
+            authType: "oauth",
+            ...record,
+          });
 
     return NextResponse.json({
       success: true,
@@ -61,7 +113,7 @@ export async function POST(request) {
       },
     });
   } catch (error) {
-    console.log("Kiro social exchange error:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("Kiro social exchange error:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

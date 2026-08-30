@@ -116,6 +116,10 @@ export default {
     socialLoginUrl: "https://prod.us-east-1.auth.desktop.kiro.dev/login",
     socialTokenUrl: "https://prod.us-east-1.auth.desktop.kiro.dev/oauth/token",
     socialRefreshUrl: "https://prod.us-east-1.auth.desktop.kiro.dev/refreshToken",
+    socialClientId: process.env.KIRO_OAUTH_CLIENT_ID || "kiro-cli",
+    socialDeviceAuthorizeUrl:
+      "https://prod.us-east-1.auth.desktop.kiro.dev/oauth/device/authorization",
+    socialDevicePollUrl: "https://prod.us-east-1.auth.desktop.kiro.dev/oauth/device/poll",
     authMethods: [
       "builder-id",
       "idc",
