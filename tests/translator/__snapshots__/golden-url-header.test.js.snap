@@ -455,10 +455,10 @@ exports[`GOLDEN buildHeaders (default executor providers) > cline → headers (a
     "Authorization": "Bearer <TOK>",
     "Content-Type": "application/json",
     "HTTP-Referer": "https://cline.bot",
-    "User-Agent": "VansRouter/0.91.10",
+    "User-Agent": "VansRouter/0.91.12",
     "X-CLIENT-TYPE": "vansrouter",
-    "X-CLIENT-VERSION": "0.91.10",
-    "X-CORE-VERSION": "0.91.10",
+    "X-CLIENT-VERSION": "0.91.12",
+    "X-CORE-VERSION": "0.91.12",
     "X-IS-MULTIROOT": "false",
     "X-PLATFORM": "linux",
     "X-PLATFORM-VERSION": "<ENV>",
@@ -468,10 +468,10 @@ exports[`GOLDEN buildHeaders (default executor providers) > cline → headers (a
     "Authorization": "Bearer <TOK>",
     "Content-Type": "application/json",
     "HTTP-Referer": "https://cline.bot",
-    "User-Agent": "VansRouter/0.91.10",
+    "User-Agent": "VansRouter/0.91.12",
     "X-CLIENT-TYPE": "vansrouter",
-    "X-CLIENT-VERSION": "0.91.10",
-    "X-CORE-VERSION": "0.91.10",
+    "X-CLIENT-VERSION": "0.91.12",
+    "X-CORE-VERSION": "0.91.12",
     "X-IS-MULTIROOT": "false",
     "X-PLATFORM": "linux",
     "X-PLATFORM-VERSION": "<ENV>",
@@ -482,10 +482,10 @@ exports[`GOLDEN buildHeaders (default executor providers) > cline → headers (a
     "Authorization": "Bearer <TOK>",
     "Content-Type": "application/json",
     "HTTP-Referer": "https://cline.bot",
-    "User-Agent": "VansRouter/0.91.10",
+    "User-Agent": "VansRouter/0.91.12",
     "X-CLIENT-TYPE": "vansrouter",
-    "X-CLIENT-VERSION": "0.91.10",
-    "X-CORE-VERSION": "0.91.10",
+    "X-CLIENT-VERSION": "0.91.12",
+    "X-CORE-VERSION": "0.91.12",
     "X-IS-MULTIROOT": "false",
     "X-PLATFORM": "linux",
     "X-PLATFORM-VERSION": "<ENV>",
@@ -1101,7 +1101,7 @@ exports[`GOLDEN buildHeaders (default executor providers) > kimi → headers (ap
     "X-Msh-Device-Model": "Linux x64",
     "X-Msh-Device-Name": "<ENV>",
     "X-Msh-Platform": "9router",
-    "X-Msh-Version": "0.91.10",
+    "X-Msh-Version": "0.91.12",
     "x-api-key": "<CRED>",
   },
   "nonStream": {
@@ -1112,7 +1112,7 @@ exports[`GOLDEN buildHeaders (default executor providers) > kimi → headers (ap
     "X-Msh-Device-Model": "Linux x64",
     "X-Msh-Device-Name": "<ENV>",
     "X-Msh-Platform": "9router",
-    "X-Msh-Version": "0.91.10",
+    "X-Msh-Version": "0.91.12",
     "x-api-key": "<CRED>",
   },
   "oauth": {
@@ -1124,7 +1124,7 @@ exports[`GOLDEN buildHeaders (default executor providers) > kimi → headers (ap
     "X-Msh-Device-Model": "Linux x64",
     "X-Msh-Device-Name": "<ENV>",
     "X-Msh-Platform": "9router",
-    "X-Msh-Version": "0.91.10",
+    "X-Msh-Version": "0.91.12",
     "x-api-key": "<CRED>",
   },
 }
@@ -1857,6 +1857,28 @@ exports[`GOLDEN buildHeaders (default executor providers) > zcode → headers (a
 }
 `;
 
+exports[`GOLDEN buildHeaders (default executor providers) > zed → headers (apiKey / oauth) 1`] = `
+{
+  "apiKey": {
+    "Accept": "text/event-stream",
+    "Authorization": "<CRED>",
+    "Content-Type": "application/json",
+    "content-type": "application/json",
+  },
+  "nonStream": {
+    "Authorization": "<CRED>",
+    "Content-Type": "application/json",
+    "content-type": "application/json",
+  },
+  "oauth": {
+    "Accept": "text/event-stream",
+    "Authorization": "<CRED>",
+    "Content-Type": "application/json",
+    "content-type": "application/json",
+  },
+}
+`;
+
 exports[`GOLDEN buildHeaders (default executor providers) > zenmux → headers (apiKey / oauth) 1`] = `
 {
   "apiKey": {
@@ -2489,6 +2511,13 @@ exports[`GOLDEN buildUrl (default executor providers) > zcode → url (stream + 
 {
   "nonStream": "https://api.z.ai/api/anthropic/v1/messages",
   "stream": "https://api.z.ai/api/anthropic/v1/messages",
+}
+`;
+
+exports[`GOLDEN buildUrl (default executor providers) > zed → url (stream + non-stream) 1`] = `
+{
+  "nonStream": "https://cloud.zed.dev/completions",
+  "stream": "https://cloud.zed.dev/completions",
 }
 `;
 

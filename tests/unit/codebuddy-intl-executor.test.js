@@ -1,5 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { CodeBuddyIntlExecutor } from "../../open-sse/executors/codebuddy-intl.js";
+import { parseCodeBuddyUsage } from "../../open-sse/services/usage/codebuddy-cn.js";
 
 vi.mock("../../open-sse/utils/proxyFetch.js", () => ({ proxyAwareFetch: vi.fn() }));
 
@@ -92,6 +93,43 @@ describe("CodeBuddy Intl usage", () => {
     vi.clearAllMocks();
   });
 
+  it.each([
+    ["codebuddy-cn", "CodeBuddy CN"],
+    ["codebuddy-intl", "CodeBuddy Intl"],
+  ])("parses %s payloads with ISO and numeric reset times", (providerId, label) => {
+    const result = parseCodeBuddyUsage({
+      code: 0,
+      data: { Response: { Data: { Accounts: [{
+        PackageName: label,
+        CycleStartTime: "2026-08-01T00:00:00Z",
+        CycleEndTime: "2026-09-01T00:00:00Z",
+        DeductionEndTime: String(Date.parse("2026-12-01T00:00:00Z")),
+        CycleCapacityUsed: 2,
+        CycleCapacitySize: 100,
+      }] } } },
+    }, providerId);
+
+    expect(result.plan).toBe(label);
+    expect(result.quotas.Monthly).toMatchObject({
+      used: 2,
+      total: 100,
+      resetAt: "2026-09-01T00:00:00.000Z",
+      recurring: true,
+    });
+  });
+
+  it.each([
+    ["codebuddy-cn", "CodeBuddy CN"],
+    ["codebuddy-intl", "CodeBuddy Intl"],
+  ])("distinguishes malformed from empty %s payloads", (providerId, label) => {
+    expect(parseCodeBuddyUsage({ code: 0 }, providerId).message)
+      .toBe(`${label} connected. Usage payload malformed.`);
+    expect(parseCodeBuddyUsage({
+      code: 0,
+      data: { Response: { Data: { Accounts: [] } } },
+    }, providerId).message).toBe(`${label} connected. No credit package found.`);
+  });
+
   it("uses the Intl billing endpoint and parses the mocked response", async () => {
     proxyAwareFetch.mockResolvedValueOnce({
       ok: true,
@@ -140,12 +178,12 @@ describe("CodeBuddy Intl usage", () => {
     expect(result.message).toMatch(/invalid or expired/i);
   });
 
-  it("returns a connected message for malformed or empty payloads", async () => {
+  it("distinguishes malformed from empty fetched payloads", async () => {
     const { getUsageForProvider } = await import("../../open-sse/services/usage.js");
 
     proxyAwareFetch.mockResolvedValueOnce(jsonResponse({ code: 0 }));
     const malformed = await getUsageForProvider(usageConnection());
-    expect(malformed.message).toMatch(/no credit package found/i);
+    expect(malformed.message).toMatch(/usage payload malformed/i);
 
     proxyAwareFetch.mockResolvedValueOnce(jsonResponse({
       code: 0,
