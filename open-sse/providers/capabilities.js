@@ -23,6 +23,7 @@
 // 2.0+, Grok, Perplexity). Verify with: curl -s https://models.dev/api.json
 
 import { matchPattern } from "./pricing.js";
+import { looksLikeVisionModel } from "./visionPatterns.js";
 
 /**
  * Safe floor — every resolved result is merged over this so consumers
@@ -356,6 +357,46 @@ export const PATTERN_CAPABILITIES = [
  * @param {string} model
  * @returns {object} full capabilities object
  */
+const MODALITY_KEYS = ["vision", "pdf", "audioInput", "videoInput"];
+
+// Catalog lookups, installed by the server at startup. Left as no-ops in the
+// browser bundle, where there is no file to read.
+let catalogSource = null;
+
+/**
+ * Install the synced catalog reader (server only).
+ * @param {{ getModalities: Function, getLimits: Function } | null} source
+ */
+export function setCatalogSource(source) {
+  catalogSource = source;
+}
+
+// Apply the synced catalog + name heuristic on top of a table-resolved result.
+// Strictly additive: a capability already true stays true, and a false one only
+// flips when an outside source positively declares support.
+function refine(base, provider, model) {
+  const result = { ...DEFAULT_CAPABILITIES, ...base };
+
+  if (catalogSource) {
+    const modalities = catalogSource.getModalities(model);
+    if (modalities) {
+      for (const key of MODALITY_KEYS) {
+        if (modalities[key] === true) result[key] = true;
+      }
+    }
+
+    const limits = catalogSource.getLimits(provider, model);
+    if (limits) {
+      if (limits.contextWindow > 0) result.contextWindow = limits.contextWindow;
+      if (limits.maxOutput > 0) result.maxOutput = limits.maxOutput;
+    }
+  }
+
+  if (!result.vision && looksLikeVisionModel(model)) result.vision = true;
+
+  return result;
+}
+
 export function getCapabilitiesForModel(provider, model) {
   if (!model) return { ...DEFAULT_CAPABILITIES };
 
@@ -373,13 +414,13 @@ export function getCapabilitiesForModel(provider, model) {
   if (MODEL_CAPABILITIES[baseModel]) return { ...DEFAULT_CAPABILITIES, ...MODEL_CAPABILITIES[baseModel] };
   if (MODEL_CAPABILITIES[model]) return { ...DEFAULT_CAPABILITIES, ...MODEL_CAPABILITIES[model] };
 
-  // 3. Pattern match (first match wins)
+  // 3. Pattern match (first match wins), refined by catalog + name heuristic
   for (const { pattern, caps } of PATTERN_CAPABILITIES) {
     if (matchPattern(pattern, baseModel) || matchPattern(pattern, model)) {
-      return { ...DEFAULT_CAPABILITIES, ...caps };
+      return refine(caps, provider, model);
     }
   }
 
   // 4. Floor
-  return { ...DEFAULT_CAPABILITIES };
+  return refine(null, provider, model);
 }
