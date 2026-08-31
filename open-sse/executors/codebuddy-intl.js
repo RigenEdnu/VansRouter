@@ -1,5 +1,7 @@
 import { DefaultExecutor } from "./default.js";
 
+const REQUIRED_SYSTEM_PROMPT = "You are CodeBuddy Code.";
+
 /**
  * CodeBuddyIntlExecutor — talks to https://www.codebuddy.ai/v2/chat/completions
  *
@@ -14,7 +16,8 @@ export class CodeBuddyIntlExecutor extends DefaultExecutor {
   }
 
   transformRequest(model, body, stream, credentials) {
-    const transformed = super.transformRequest(model, body, stream, credentials);
+    const input = body && typeof body === "object" ? structuredClone(body) : body;
+    const transformed = super.transformRequest(model, input, stream, credentials);
     transformed.stream = true;
 
     const eff = transformed.reasoning_effort;
@@ -27,16 +30,23 @@ export class CodeBuddyIntlExecutor extends DefaultExecutor {
     // CodeBuddy rejects plain OpenAI shape (11101 invalid request): needs a
     // leading system prompt + user content as typed blocks, not a bare string.
     const source = Array.isArray(transformed.messages) ? transformed.messages : [];
-    transformed.messages = [{ role: "system", content: "You are CodeBuddy Code." }];
+    const messages = [{ role: "system", content: REQUIRED_SYSTEM_PROMPT }];
+    let requiredPromptSeen = false;
     for (const message of source) {
-      if (!message || typeof message !== "object" || ["system", "developer"].includes(message.role)) continue;
+      if (!message || typeof message !== "object") continue;
+      if (message.role === "system" && message.content === REQUIRED_SYSTEM_PROMPT) {
+        if (requiredPromptSeen) continue;
+        requiredPromptSeen = true;
+        continue;
+      }
       if (message.role === "user" && typeof message.content === "string") {
-        transformed.messages.push({ ...message, content: [{ type: "text", text: message.content }] });
+        messages.push({ ...message, content: [{ type: "text", text: message.content }] });
       } else {
-        transformed.messages.push({ ...message });
+        messages.push({ ...message });
       }
     }
-    
+    transformed.messages = messages;
+
     return transformed;
   }
 }
