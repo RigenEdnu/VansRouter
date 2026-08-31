@@ -6,7 +6,9 @@ const fs = require("fs");
 const os = require("os");
 const path = require("path");
 
-const BETTER_SQLITE3_VERSION = "12.6.2";
+const [NODE_MAJOR] = process.versions.node.split(".").map(Number);
+const USE_NAPI_BUILD = NODE_MAJOR >= 22;
+const BETTER_SQLITE3_VERSION = USE_NAPI_BUILD ? "13.0.3" : "12.6.2";
 const SQL_JS_VERSION = "1.14.1";
 
 function getDataDir() {
@@ -45,9 +47,23 @@ function hasModule(name) {
   return fs.existsSync(path.join(getRuntimeNodeModules(), name, "package.json"));
 }
 
+function isGlibcRuntime() {
+  try { return Boolean(process.report?.getReport()?.header?.glibcVersionRuntime); } catch { return true; }
+}
+
+// 12.x compiles/downloads into build/Release; 13.x ships prebuilds/<platform>-<arch>.node.
+function getBetterSqliteBinary() {
+  const root = path.join(getRuntimeNodeModules(), "better-sqlite3");
+  const platform = process.platform === "linux" && !isGlibcRuntime() ? "linuxmusl" : process.platform;
+  return [
+    path.join(root, "build", "Release", "better_sqlite3.node"),
+    path.join(root, "prebuilds", `${platform}-${process.arch}.node`),
+  ].find((file) => fs.existsSync(file));
+}
+
 function isBetterSqliteBinaryValid() {
-  const binary = path.join(getRuntimeNodeModules(), "better-sqlite3", "build", "Release", "better_sqlite3.node");
-  if (!fs.existsSync(binary)) return false;
+  const binary = getBetterSqliteBinary();
+  if (!binary) return false;
   try {
     const fd = fs.openSync(binary, "r");
     const buf = Buffer.alloc(4);
@@ -91,6 +107,7 @@ function runNpmInstall({ cwd, pkgs, extraArgs = [], timeout = 180000 }) {
 function npmInstall(pkgs, opts = {}) {
   const cwd = ensureRuntimeDir();
   const extra = opts.optional ? ["--no-save"] : [];
+  if (opts.ignoreScripts) extra.push("--ignore-scripts");
   if (!opts.silent) console.log("⏳ Installing SQLite engine (first run)...");
   const res = runNpmInstall({ cwd, pkgs, extraArgs: extra, timeout: opts.timeout || 180000 });
   if (!res.ok && !opts.silent) {
@@ -137,7 +154,7 @@ function ensureSqliteRuntime({ silent = false } = {}) {
     return { betterSqlite: true, sqlJs: sqlJsOk };
   }
 
-  const ok = npmInstall([`better-sqlite3@${BETTER_SQLITE3_VERSION}`], { optional: true, silent });
+  const ok = npmInstall([`better-sqlite3@${BETTER_SQLITE3_VERSION}`], { optional: true, silent, ignoreScripts: USE_NAPI_BUILD });
   return {
     betterSqlite: ok && hasModule("better-sqlite3") && isBetterSqliteBinaryValid(),
     sqlJs: sqlJsOk,
