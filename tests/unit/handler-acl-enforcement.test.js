@@ -111,9 +111,13 @@ vi.mock("open-sse/services/combo.js", () => ({
 }));
 vi.mock("open-sse/utils/claudeHeaderCache.js", () => ({ cacheClaudeHeaders: mocks.cacheClaudeHeaders }));
 vi.mock("open-sse/translator/formats.js", () => ({ detectFormatByEndpoint: mocks.detectFormatByEndpoint }));
-vi.mock("open-sse/config/runtimeConfig.js", () => ({
-  HTTP_STATUS: { BAD_REQUEST: 400, UNAUTHORIZED: 401, FORBIDDEN: 403, NOT_FOUND: 404, RATE_LIMITED: 429, SERVER_ERROR: 500, BAD_GATEWAY: 502, SERVICE_UNAVAILABLE: 503 },
-}));
+vi.mock("open-sse/config/runtimeConfig.js", async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    HTTP_STATUS: { BAD_REQUEST: 400, UNAUTHORIZED: 401, FORBIDDEN: 403, NOT_FOUND: 404, RATE_LIMITED: 429, SERVER_ERROR: 500, BAD_GATEWAY: 502, SERVICE_UNAVAILABLE: 503 },
+  };
+});
 vi.mock("open-sse/utils/error.js", () => ({
   errorResponse: (status, message) => new Response(JSON.stringify({ error: { message } }), { status }),
   unavailableResponse: mocks.unavailableResponse,

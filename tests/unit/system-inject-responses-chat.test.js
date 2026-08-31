@@ -3,7 +3,7 @@ import { injectSystemPrompt } from "../../open-sse/rtk/systemInject.js";
 import { FORMATS } from "../../open-sse/translator/formats.js";
 
 describe("systemInject - OpenAI Responses & Chat regression (#106 / #2497)", () => {
-  it("injects top-level instructions for openai-responses when instructions is missing", () => {
+  it("injects typed message for openai-responses when input array is present", () => {
     const body = {
       input: [
         {
@@ -16,14 +16,16 @@ describe("systemInject - OpenAI Responses & Chat regression (#106 / #2497)", () 
 
     injectSystemPrompt(body, FORMATS.OPENAI_RESPONSES, "respond tersely");
 
-    expect(body.instructions).toBe("respond tersely");
-    expect(body.input).toEqual([
-      {
-        type: "message",
-        role: "user",
-        content: [{ type: "input_text", text: "hello" }],
-      },
-    ]);
+    expect(body.input[0]).toEqual({
+      type: "message",
+      role: "system",
+      content: [{ type: "input_text", text: "respond tersely" }],
+    });
+    expect(body.input[1]).toEqual({
+      type: "message",
+      role: "user",
+      content: [{ type: "input_text", text: "hello" }],
+    });
   });
 
   it("appends to existing top-level instructions for openai-responses", () => {
