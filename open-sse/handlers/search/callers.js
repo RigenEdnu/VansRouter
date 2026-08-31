@@ -32,6 +32,8 @@
 
 import { assertPublicUrl } from "../../../src/shared/utils/ssrfGuard.js";
 import { buildExaBody } from "./exa.js";
+import { getProviderSetting } from "./requestHelpers.js";
+import { buildXquikRequest } from "./xquik.js";
 
 // ── Helpers ─────────────────────────────────────────────────────────────
 
@@ -57,17 +59,7 @@ export function parseDomainFilter(domainFilter) {
  * @param {string} key
  * @returns {string|undefined}
  */
-export function getProviderSetting(params, key) {
-  const fromOptions = params.providerOptions?.[key];
-  if (typeof fromOptions === "string" && fromOptions.trim().length > 0) {
-    return fromOptions.trim();
-  }
-  const fromProviderData = params.providerSpecificData?.[key];
-  if (typeof fromProviderData === "string" && fromProviderData.trim().length > 0) {
-    return fromProviderData.trim();
-  }
-  return undefined;
-}
+export { getProviderSetting };
 
 /**
  * Resolve base URL with optional override from providerOptions.baseUrl.
@@ -332,34 +324,6 @@ async function buildSearxngRequest(config, params) {
     init: {
       method: "GET",
       headers: { Accept: "application/json" },
-    },
-  };
-}
-
-async function buildXquikRequest(config, params) {
-  const apiKey = params.token;
-  if (!apiKey) throw new Error("Xquik requires an API key");
-
-  const queryType = getProviderSetting(params, "queryType");
-  if (queryType && !["Latest", "Top"].includes(queryType)) {
-    throw new Error("Xquik queryType must be Latest or Top");
-  }
-
-  const qp = new URLSearchParams({
-    q: params.query,
-    limit: String(params.maxResults),
-  });
-  const cursor = getProviderSetting(params, "cursor");
-  if (cursor) qp.set("cursor", cursor);
-  if (queryType) qp.set("queryType", queryType);
-  if (params.language) qp.set("language", params.language);
-
-  const baseUrl = await resolveBaseUrl(config, params);
-  return {
-    url: `${baseUrl}?${qp}`,
-    init: {
-      method: "GET",
-      headers: { Accept: "application/json", "x-api-key": apiKey },
     },
   };
 }
