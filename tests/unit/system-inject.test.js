@@ -6,7 +6,7 @@ import { ROLE } from "../../open-sse/translator/schema/roles.js";
 import { injectCaveman } from "../../open-sse/rtk/caveman.js";
 import { injectPonytail } from "../../open-sse/rtk/ponytail.js";
 import { CAVEMAN_PROMPTS } from "../../open-sse/rtk/cavemanPrompts.js";
-import { PONYTAIL_PROMPTS } from "../../open-sse/rtk/ponytailPrompt.js";
+import { PONYTAIL_PROMPTS } from "../../open-sse/rtk/ponytailPrompts.js";
 
 const SEP = "\n\n";
 const P1 = "CAVEMAN_TEST_PROMPT_AAA";
