@@ -7,6 +7,8 @@ Mandatory for every AI-assisted release. Do not bypass these rules with force ta
 - Release source: annotated Git tag `vX.Y.Z` pushed to the current tip of `main`.
 - `package.json` and `cli/package.json` versions must equal `X.Y.Z`.
 - `CHANGELOG.md` must start with `# vX.Y.Z (YYYY-MM-DD)`.
+- The top release entry must be detailed enough to mirror the shipped scope: group changes under meaningful headings such as Features, Reliability & Compatibility, Frontend & Accessibility, Release Infrastructure, and Tests; name affected providers/modules; document user-visible behavior and compatibility changes; include verified test/build evidence. Do not use a vague one-line summary for a multi-feature release.
+- Changelog claims must be evidence-based: derive entries from `git log <previous-tag>..HEAD`, final diff, and completed validation output. Mark skipped or unavailable integration coverage explicitly; never claim provider behavior was live-verified without a real provider test.
 - The commit immediately before the tag must be the last commit changing only `CHANGELOG.md`.
 - All code, workflow, test, and version changes must be complete before the changelog-only commit.
 - Never retag or move an existing release tag. Use the next version.

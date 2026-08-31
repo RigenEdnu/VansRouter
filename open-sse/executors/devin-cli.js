@@ -357,7 +357,7 @@ export class DevinCliExecutor extends BaseExecutor {
               } else if (type === "message_stop" || type === "stop" || type === "done") {
                 // ACP may deliver the terminal notification before a fragmented
                 // stdout write has been fully observed by Node.
-                setTimeout(() => finish(), 50);
+                setTimeout(() => finish(), 100);
                 return;
               } else if (type === "error") {
                 finish(String(params.message || params.error || "Devin ACP error"));
