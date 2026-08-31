@@ -52,8 +52,8 @@ export default function BaseUrlSelect({
   withV1 = true,
   currentUrl = "",
 }) {
-  const [savedPresets, setSavedPresets] = useState([]);
-  const [presetsLoaded, setPresetsLoaded] = useState(false);
+  const [savedPresets, setSavedPresets] = useState(readPresets);
+  const [presetsLoaded, setPresetsLoaded] = useState(true);
   const [mode, setMode] = useState("");
   const [customInput, setCustomInput] = useState("");
   const initializedRef = useRef(false);
@@ -75,8 +75,6 @@ export default function BaseUrlSelect({
         return match ? `saved:${match.name}` : prev;
       });
     };
-    sync();
-    setPresetsLoaded(true);
     return subscribePresets(sync);
   }, []);
 
@@ -96,9 +94,11 @@ export default function BaseUrlSelect({
       : null;
     const target = matched || options.find((o) => o.value !== CUSTOM_VALUE);
     if (target) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- hydrate initial selection from preset/options on mount
       setMode(target.value);
       onChange(target.url);
     } else {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- hydrate custom fallback mode on mount
       setMode(CUSTOM_VALUE);
     }
   }, [presetsLoaded, options, onChange, currentUrl]);
