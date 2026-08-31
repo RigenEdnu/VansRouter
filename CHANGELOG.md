@@ -1,3 +1,52 @@
+# v0.91.20 (2026-08-31)
+
+## Features
+
+- **Model catalog refresh** — Added background synchronization from models.dev, expanded provider capability metadata, and registered new GLM, DeepSeek, Grok, Gemini, and Zed model coverage without blocking normal startup.
+- **Antigravity web search** — Added Antigravity as a search provider, including provider routing, quota handling, image-size-to-aspect-ratio mapping, and Gemini 3.7 Flash tier support.
+- **Xquik search** — Added Xquik search integration with validated provider options, SSRF-safe base URL handling, credential fallback for supported providers, and normalized unified search responses.
+- **Zed provider** — Added Zed authentication, model routing, usage/quota tracking, and provider registry integration.
+- **Grok CLI bulk import** — Added dashboard and OAuth support for importing multiple Grok CLI accounts.
+- **Shared CLI endpoint presets** — Consolidated endpoint presets across CLI tool cards, including Codex, OpenCode, Kilo, Cline, Copilot, Claude, Droid, Hermes, Jcode, and OpenClaw.
+- **Codex Spark quota tracking** — Added GPT-5.3-Codex-Spark quota-window tracking and reset-credit support.
+
+## Reliability & Compatibility
+
+- **CommandCode streaming** — Added in-stream error translation, response termination handling, and protocol helper extraction while preserving combo and account-fallback behavior.
+- **Responses streaming** — Preserved usage when clients disconnect after terminal events, removed false disconnect logging, and restored passthrough `DONE` termination.
+- **Ollama streaming** — Parses final unterminated NDJSON chunks instead of dropping the stream tail.
+- **Claude compatibility** — Decloaks tool names for same-format streaming, defaults missing Claude tool types, and preserves provider-specific tool contracts.
+- **MiniMax and OpenAI bridges** — Preserves images on matched transports and supports provider-specific reasoning formats.
+- **Search failure isolation** — Prevents search-only provider failures from taking chat providers offline.
+- **Database runtime** — Supports better-sqlite3 N-API prebuilds on Node 22+ and spreads query parameters correctly in the SQLite adapter.
+- **Headroom and RTK** — Adds configurable compression timeout, format-safe/idempotent system prompt injection, and diagnostics before silent translation failures.
+- **OAuth resilience** — Updates Cline refresh handling, CodeBuddy Intl OAuth wiring, provider probe timeouts, and undefined-provider guards.
+
+## CodeBuddy
+
+- **CodeBuddy Intl** — Added OAuth/device-code login, provider registration, model catalog parity, stream-only executor handling, and usage reporting.
+- **Request preservation** — Keeps client `system` and `developer` instructions, preserves assistant/tool and multimodal content, converts only string user content to typed blocks, and avoids duplicate required system prompts.
+- **Quota parsing** — Shares CN/Intl parsing, supports ISO and numeric timestamps, distinguishes malformed payloads from empty quotas, and separates recurring allowance from one-shot bonus packages.
+- **Contract tests** — Added executor, quota, capability, and regression coverage for CN/Intl behavior.
+
+## Frontend & Accessibility
+
+- **Provider dashboard** — Added bulk Grok CLI import UI, refreshed provider/model screens, and improved quota presentation.
+- **Token saver** — Updated cards and system-injection flows for current request formats.
+- **UI robustness** — Improved responsive provider tables, endpoint controls, and model/tool configuration surfaces.
+
+## Release Infrastructure
+
+- **Multi-architecture Docker** — Added mandatory `docker/setup-qemu-action@v3` immediately before `docker/setup-buildx-action@v3`, preventing ARM64 native-module build failures and QEMU instruction stalls.
+- **Container naming** — Standardized published GHCR image references to lowercase `ghcr.io/vanszs/vansrouter`.
+- **Release validation** — Kept version, changelog, annotated-tag, npm artifact, SQLite smoke-test, and multi-architecture image gates explicit in CI/CD policy.
+
+## Tests
+
+- Full suite verified: **260 test files passed, 13 skipped; 3039 tests passed, 82 skipped**.
+- Production build and TypeScript compilation passed.
+- `lint:undef`, `lint:reacthooks`, and `git diff --check` passed.
+
 # v0.91.12 (2026-08-25)
 
 - **Multi-arch release CI hardening** — Added `docker/setup-qemu-action@v3` prior to `docker/setup-buildx-action@v3` in the release workflow to resolve ARM64 binfmt registration and prevent QEMU instruction stalls during multi-platform container builds.
