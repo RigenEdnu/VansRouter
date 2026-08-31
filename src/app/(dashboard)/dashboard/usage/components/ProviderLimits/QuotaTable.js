@@ -157,6 +157,7 @@ export default function QuotaTable({
         <table className="w-full min-w-[420px] table-fixed text-left">
           <tbody>
             {currentPageRows.map((quota) => {
+              const isUnlimited = quota.unlimited === true;
               const colors = getColorClasses(quota.remaining);
               const countdown = formatResetTime(quota.resetAt);
               const resetDisplay = formatResetTimeDisplay(quota.resetAt);
@@ -177,21 +178,32 @@ export default function QuotaTable({
 
                   <td className={`${cellPad} w-[45%]`}>
                     <div className={compact ? "space-y-1" : "space-y-1.5"}>
-                      <div className={`${compact ? "h-1" : "h-1.5"} rounded-full overflow-hidden border ${colors.bgLight} ${
-                        quota.remaining === 0 ? "border-black/10 dark:border-white/10" : "border-transparent"
-                      }`}>
-                        <div
-                          className={`h-full transition-all duration-300 ${colors.bg}`}
-                          style={{ width: `${Math.min(quota.remaining, 100)}%` }}
-                        />
-                      </div>
+                      {!isUnlimited && (
+                        <div className={`${compact ? "h-1" : "h-1.5"} rounded-full overflow-hidden border ${colors.bgLight} ${
+                          quota.remaining === 0 ? "border-black/10 dark:border-white/10" : "border-transparent"
+                        }`}>
+                          <div
+                            className={`h-full transition-all duration-300 ${colors.bg}`}
+                            style={{ width: `${Math.min(quota.remaining, 100)}%` }}
+                          />
+                        </div>
+                      )}
 
                       <div className={`flex items-center justify-between ${compact ? "text-[10px]" : "text-xs"}`}>
-                        <span className="text-text-muted">
-                          {quota.used.toLocaleString()} / {quota.total > 0 ? quota.total.toLocaleString() : "∞"}
+                        <span
+                          className="text-text-muted"
+                          title={
+                            isUnlimited
+                              ? `${quota.used.toLocaleString()} used · Unlimited`
+                              : `${quota.used.toLocaleString()} / ${quota.total > 0 ? quota.total.toLocaleString() : "∞"}`
+                          }
+                        >
+                          {isUnlimited
+                            ? `${quota.used.toLocaleString()} used · Unlimited`
+                            : `${quota.used.toLocaleString()} / ${quota.total > 0 ? quota.total.toLocaleString() : "∞"}`}
                         </span>
-                        <span className={`font-medium ${colors.text}`}>
-                          {quota.remaining}%
+                        <span className={`font-medium ${isUnlimited ? "text-green-600 dark:text-green-400" : colors.text}`}>
+                          {isUnlimited ? "Unlimited" : `${quota.remaining}%`}
                         </span>
                       </div>
                     </div>

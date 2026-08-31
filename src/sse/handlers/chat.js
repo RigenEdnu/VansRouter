@@ -11,6 +11,7 @@ import {
   isKindAllowed,
   isTrustedInternalRequest,
 } from "../services/auth.js";
+import { handleAntigravityQuotaError } from "../services/antigravityQuota.js";
 import {
   isKimchiQuotaExhausted,
   buildKimchiQuotaExhaustedUpdate,
@@ -545,8 +546,22 @@ async function handleSingleModelChat(body, modelStr, clientRawRequest = null, re
       // Fall through to fallback behavior — the next account will be tried.
     }
 
-    // Mark account unavailable (auto-calculates cooldown with classify429 for 429s, exponential backoff, or precise resetsAtMs)
-    const { shouldFallback } = await markAccountUnavailable(credentials.connectionId, result.status, errorText, provider, model, result.resetsAtMs);
+    // Antigravity 409/429: refresh live quota to get exact resetAt before locking
+    let quotaResetMs = null;
+    let resetsAtMs = result.resetsAtMs;
+    if (provider === "antigravity" && (result.status === 409 || result.status === 429)) {
+      quotaResetMs = await handleAntigravityQuotaError(
+        credentials.connectionId, result.status, model,
+        refreshedCredentials.accessToken, credentials.providerSpecificData
+      );
+      if (quotaResetMs) resetsAtMs = quotaResetMs;
+    }
+
+    // Exhausted Antigravity model is blocked only in RAM cache until upstream resetAt.
+    // Do not persist a modelLock_* for this path.
+    const { shouldFallback } = (provider === "antigravity" && quotaResetMs)
+      ? { shouldFallback: true }
+      : await markAccountUnavailable(credentials.connectionId, result.status, errorText, provider, model, resetsAtMs);
 
     // Record provider-level failure for circuit breaker — skip if it's a known
     // Kimchi quota-exhaustion (not a provider-wide outage). Proxy-aware: failure

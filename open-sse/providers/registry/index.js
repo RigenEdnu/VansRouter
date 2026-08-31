@@ -142,6 +142,7 @@ import p140 from "./fish-audio.js";
 import p141 from "./alitp-intl.js";
 import p142 from "./xquik.js";
 import p143 from "./ollama-search.js";
+import p144 from "./zed.js";
 
 export default [
   p0,
@@ -287,5 +288,6 @@ export default [
   p140,
   p141,
   p142,
-  p143
+  p143,
+  p144
 ];
