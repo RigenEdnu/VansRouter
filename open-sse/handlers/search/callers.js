@@ -336,6 +336,76 @@ async function buildSearxngRequest(config, params) {
   };
 }
 
+async function buildXquikRequest(config, params) {
+  const apiKey = params.token;
+  if (!apiKey) throw new Error("Xquik requires an API key");
+
+  const queryType = getProviderSetting(params, "queryType");
+  if (queryType && !["Latest", "Top"].includes(queryType)) {
+    throw new Error("Xquik queryType must be Latest or Top");
+  }
+
+  const qp = new URLSearchParams({
+    q: params.query,
+    limit: String(params.maxResults),
+  });
+  const cursor = getProviderSetting(params, "cursor");
+  if (cursor) qp.set("cursor", cursor);
+  if (queryType) qp.set("queryType", queryType);
+  if (params.language) qp.set("language", params.language);
+
+  const baseUrl = await resolveBaseUrl(config, params);
+  return {
+    url: `${baseUrl}?${qp}`,
+    init: {
+      method: "GET",
+      headers: { Accept: "application/json", "x-api-key": apiKey },
+    },
+  };
+}
+
+async function buildOllamaSearchRequest(config, params) {
+  const body = { query: params.query, max_results: params.maxResults };
+  if (params.country) body.country = params.country;
+  if (params.language) body.language = params.language;
+  const baseUrl = await resolveBaseUrl(config, params);
+  return {
+    url: baseUrl,
+    init: {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(params.token ? { Authorization: `Bearer ${params.token}` } : {}),
+      },
+      body: JSON.stringify(body),
+    },
+  };
+}
+
+async function buildGlmSearchRequest(config, params) {
+  const body = {
+    jsonrpc: "2.0",
+    id: `9r-${Date.now()}`,
+    method: "tools/call",
+    params: {
+      name: "web_search_prime",
+      arguments: { search_query: params.query, count: params.maxResults },
+    },
+  };
+  const baseUrl = await resolveBaseUrl(config, params);
+  return {
+    url: baseUrl,
+    init: {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(params.token ? { Authorization: `Bearer ${params.token}` } : {}),
+      },
+      body: JSON.stringify(body),
+    },
+  };
+}
+
 // ── Dispatcher ──────────────────────────────────────────────────────────
 
 const BUILDERS = {
@@ -349,6 +419,9 @@ const BUILDERS = {
   "searchapi": buildSearchApiRequest,
   "youcom": buildYouComRequest,
   "searxng": buildSearxngRequest,
+  "xquik": buildXquikRequest,
+  "ollama-search": buildOllamaSearchRequest,
+  "glm": buildGlmSearchRequest,
 };
 
 /**

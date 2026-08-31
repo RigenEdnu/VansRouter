@@ -140,6 +140,8 @@ import p138 from "./tencent.js";
 import p139 from "./freebuff.js";
 import p140 from "./fish-audio.js";
 import p141 from "./alitp-intl.js";
+import p142 from "./xquik.js";
+import p143 from "./ollama-search.js";
 
 export default [
   p0,
@@ -283,5 +285,7 @@ export default [
   p138,
   p139,
   p140,
-  p141
+  p141,
+  p142,
+  p143
 ];
