@@ -344,6 +344,12 @@ export const MODEL_CAPABILITIES = {
     contextWindow: 1048576,
     maxOutput: 131072,
   },
+  "muse-spark-1.3-contributor": {
+    reasoning: true,
+    thinkingFormat: "openai",
+    contextWindow: 1048576,
+    maxOutput: 131072,
+  },
   "grok-4.6": {
     reasoning: true,
     thinkingFormat: "openai",

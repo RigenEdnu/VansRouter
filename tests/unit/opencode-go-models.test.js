@@ -62,6 +62,7 @@ describe("OpenCode Go model catalog", () => {
       "minimax-m2.7",
       "minimax-m2.5",
       "muse-spark-1.2-contributor",
+      "muse-spark-1.3-contributor",
       "qwen3.7-max",
       "qwen3.7-plus",
       "qwen3.6-plus",

@@ -18,6 +18,7 @@ const RESPONSES_MODELS = new Set([
   "grok-4.6",
   "gpt-5.6-luna",
   "muse-spark-1.2-contributor",
+  "muse-spark-1.3-contributor",
 ]);
 
 const BASE = "https://opencode.ai/zen/go/v1";
