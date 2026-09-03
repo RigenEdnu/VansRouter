@@ -1,23 +1,23 @@
-# v0.91.21 (2026-09-01)
+# v0.91.21 (2026-09-03)
 
 ## Features
 
-- **Media & Web Search Model Availability** — Resolved virtual model IDs for all webSearch (`ag/search`, `kimi/search`, `xai/search`, `gemini/search`, `glm/search`, `ollama-search/search`, `xquik/search`), webFetch (`/fetch`), and media providers across `/v1/models/web`, `/v1/models/info`, and ACL validation layers so media dashboard test cards execute without 404 missing model errors.
-- **Upstream v0.5.59 Hybrid Sync** — Merged 26 upstream capabilities including Antigravity Google search grounding, Xquik search with SSRF-safe resolution, models.dev background capability synchronization, Antigravity 409/429 reset-aware routing, Zed plan quota tracking, and Grok CLI JSON bulk import.
-- **CodeBuddy CN & Intl Quota Unification** — Separated recurring allowance packs (Daily/Weekly/Monthly) from one-shot promotional bonus credits with exact cycle timestamps and error reporting.
+- **Gemini 3.8 Flash Tiered Support & Parity** — Registered `gemini-3.8-flash` in Gemini registry and tiered variants (`gemini-3.8-flash-high`, `gemini-3.8-flash-medium`, `gemini-3.8-flash-low`) in Antigravity provider registry, CLI menus, and MITM tooling with exact 1M context / 64k output capabilities, pricing ($0.75/$3.75), and quota tracking gauges.
+- **Media & Web Search Model Availability** — Resolved virtual and static model IDs for all webSearch (`ag/search`, `kimi/search`, `xai/search`, `gemini/search`, `glm/search`, `ollama-search/search`, `xquik/search`), webFetch (`/fetch`), and media providers across `/v1/models/web`, `/v1/models/info`, and ACL validation layers so media dashboard test cards execute without missing-model errors.
+- **Atomic Bulk Custom Model Imports** — Added `addCustomModelsBulk` using atomic SQLite transactions for multi-model imports with deduplication and normalized bulk responses in `/api/models/custom`.
+- **Antigravity Search Grounding Multi-Host Fallback** — Routed search grounding to `daily-cloudcode-pa` with automatic fallback to `cloudcode-pa` for resilience.
 
-## Reliability & Performance
+## Reliability & Security
 
-- **Format-Safe System Prompt Injection** — Made Caveman and Ponytail prompt injection strictly idempotent and format-safe across OpenAI Chat, Responses, Claude, Gemini, and Kiro wire shapes.
-- **Responses Terminal Event Finalization** — Ensured usage stats and logs are recorded when clients close on `response.completed` without `[DONE]` sentinels.
-- **better-sqlite3 N-API & Query Parameter Spread** — Integrated prebuilt N-API modules for Node 22+ with `--ignore-scripts` and spread query parameter arrays across statement bindings to prevent runtime crashes.
-- **Dynamic Headroom Compression Timeout** — Configurable `headroomTimeoutMs` threaded through settings repo, chat core, and dashboard.
+- **Kiro Social OAuth Namespace & Poll Hardening** — Restricted `targetProvider` in social exchange to the `kiro` provider namespace to prevent connection hijacking, added exponential backoff / retry bounding on device polling network errors, and improved identity match safety.
+- **Model Resolution Optimization** — Deduplicated media model resolution across connected, free, and fallback provider paths in `allowedModels.js`.
+- **Responses Terminal Event Finalization** — Ensured usage statistics and request logs finalize cleanly when clients close on `response.completed` without trailing sentinels.
 
 ## Tests & Verification
 
-- Full test suite verified: **245 test files passed, 5 skipped; 2591 tests passed, 47 skipped**.
-- Production build and TypeScript compilation clean.
-- `lint:undef` and `lint:reacthooks` clean.
+- Full test suite verified: **265 test files passed, 13 skipped; 3069 tests passed, 82 skipped** (100% green).
+- Production build (`npm run build`) completed cleanly with TypeScript verification.
+- Code quality audits: `lint:undef` and `lint:reacthooks` clean.
 
 # v0.91.20 (2026-08-31)
 
