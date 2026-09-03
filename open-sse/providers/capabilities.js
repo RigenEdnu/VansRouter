@@ -817,6 +817,20 @@ export const PATTERN_CAPABILITIES = [
     caps: { vision: true, imageOutput: true, contextWindow: 1048576 },
   },
   {
+    pattern: "*gemini-3.8*",
+    caps: {
+      vision: true,
+      audioInput: true,
+      videoInput: true,
+      reasoning: true,
+      search: true,
+      thinkingFormat: "gemini-level",
+      thinkingCanDisable: false,
+      contextWindow: 1048576,
+      maxOutput: 65536,
+    },
+  },
+  {
     pattern: "*gemini-3.7*",
     caps: {
       vision: true,

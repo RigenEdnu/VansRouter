@@ -1,3 +1,24 @@
+# v0.91.21 (2026-09-01)
+
+## Features
+
+- **Media & Web Search Model Availability** — Resolved virtual model IDs for all webSearch (`ag/search`, `kimi/search`, `xai/search`, `gemini/search`, `glm/search`, `ollama-search/search`, `xquik/search`), webFetch (`/fetch`), and media providers across `/v1/models/web`, `/v1/models/info`, and ACL validation layers so media dashboard test cards execute without 404 missing model errors.
+- **Upstream v0.5.59 Hybrid Sync** — Merged 26 upstream capabilities including Antigravity Google search grounding, Xquik search with SSRF-safe resolution, models.dev background capability synchronization, Antigravity 409/429 reset-aware routing, Zed plan quota tracking, and Grok CLI JSON bulk import.
+- **CodeBuddy CN & Intl Quota Unification** — Separated recurring allowance packs (Daily/Weekly/Monthly) from one-shot promotional bonus credits with exact cycle timestamps and error reporting.
+
+## Reliability & Performance
+
+- **Format-Safe System Prompt Injection** — Made Caveman and Ponytail prompt injection strictly idempotent and format-safe across OpenAI Chat, Responses, Claude, Gemini, and Kiro wire shapes.
+- **Responses Terminal Event Finalization** — Ensured usage stats and logs are recorded when clients close on `response.completed` without `[DONE]` sentinels.
+- **better-sqlite3 N-API & Query Parameter Spread** — Integrated prebuilt N-API modules for Node 22+ with `--ignore-scripts` and spread query parameter arrays across statement bindings to prevent runtime crashes.
+- **Dynamic Headroom Compression Timeout** — Configurable `headroomTimeoutMs` threaded through settings repo, chat core, and dashboard.
+
+## Tests & Verification
+
+- Full test suite verified: **245 test files passed, 5 skipped; 2591 tests passed, 47 skipped**.
+- Production build and TypeScript compilation clean.
+- `lint:undef` and `lint:reacthooks` clean.
+
 # v0.91.20 (2026-08-31)
 
 ## Features
